@@ -8,11 +8,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Gateway", "Gateway", "{1508
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Integration", "Integration", "{A0EEE797-0860-48AC-83C5-0F4080466EC5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mango.Services.CouponAPI", "Mango.Services.CouponAPI\Mango.Services.CouponAPI.csproj", "{4F8DFB81-1B74-4AB0-BCA5-4469D2C1C71D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F8DFB81-1B74-4AB0-BCA5-4469D2C1C71D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F8DFB81-1B74-4AB0-BCA5-4469D2C1C71D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F8DFB81-1B74-4AB0-BCA5-4469D2C1C71D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F8DFB81-1B74-4AB0-BCA5-4469D2C1C71D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4F8DFB81-1B74-4AB0-BCA5-4469D2C1C71D} = {FD0B165E-E3F4-4881-8023-EF4439C22D52}
 	EndGlobalSection
 EndGlobal
