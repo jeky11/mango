@@ -1,7 +1,19 @@
+using Mango.Web.Models;
+using Mango.Web.Service;
+using Mango.Web.Service.IService;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.Configure<ServiceUrls>(builder.Configuration.GetSection(nameof(ServiceUrls)));
+
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<ICouponService, CouponService>();
+
+builder.Services.AddScoped<IBaseService, BaseService>();
+builder.Services.AddScoped<ICouponService, CouponService>();
 
 var app = builder.Build();
 
@@ -21,8 +33,8 @@ app.UseAuthorization();
 app.MapStaticAssets();
 
 app.MapControllerRoute(
-		name: "default",
-		pattern: "{controller=Home}/{action=Index}/{id?}")
+		"default",
+		"{controller=Home}/{action=Index}/{id?}")
 	.WithStaticAssets();
 
 app.Run();
