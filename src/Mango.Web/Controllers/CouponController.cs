@@ -17,9 +17,10 @@ public class CouponController : Controller
 	public async Task<IActionResult> Index()
 	{
 		var response = await _couponService.GetAllCouponsAsync();
-		if (response?.Result == null)
+		if (response?.Result == null || !response.IsSuccess)
 		{
-			return BadRequest();
+			TempData["error"] = response?.Message;
+			return View(new List<CouponDto>());
 		}
 
 		var resultStr = Convert.ToString(response.Result);
@@ -30,5 +31,61 @@ public class CouponController : Controller
 
 		var coupons = JsonConvert.DeserializeObject<List<CouponDto>>(resultStr);
 		return View(coupons);
+	}
+
+	public IActionResult Create()
+	{
+		return View();
+	}
+
+	[HttpPost]
+	public async Task<IActionResult> Create(CouponDto coupon)
+	{
+		if (!ModelState.IsValid)
+		{
+			return View();
+		}
+
+		var response = await _couponService.CreateCouponAsync(coupon);
+		if (response is not {IsSuccess: true})
+		{
+			TempData["error"] = response?.Message;
+		}
+
+		TempData["success"] = "Coupon created successfully";
+		return RedirectToAction(nameof(Index));
+	}
+
+	public async Task<IActionResult> Delete(int id)
+	{
+		var response = await _couponService.GetCouponAsync(id);
+		if (response?.Result == null || !response.IsSuccess)
+		{
+			TempData["error"] = response?.Message;
+			return RedirectToAction(nameof(Index));
+		}
+
+		var resultStr = Convert.ToString(response.Result);
+		if (resultStr == null)
+		{
+			return BadRequest();
+		}
+
+		var coupon = JsonConvert.DeserializeObject<CouponDto>(resultStr);
+
+		return View(coupon);
+	}
+
+	[HttpPost]
+	public async Task<IActionResult> Delete(CouponDto coupon)
+	{
+		var response = await _couponService.DeleteCouponAsync(coupon.CouponId);
+		if (response is not {IsSuccess: true})
+		{
+			TempData["error"] = response?.Message;
+		}
+
+		TempData["success"] = "Coupon deleted successfully";
+		return RedirectToAction(nameof(Index));
 	}
 }
