@@ -1,8 +1,10 @@
 namespace Mango.Services.AuthAPI.Models.Dto;
 
-public record ResponseDto
+public record ResponseDto(object? Result, bool IsSuccess, string Message)
 {
-	public object? Result { get; set; }
-	public bool IsSuccess { get; set; } = true;
-	public string Message { get; set; } = string.Empty;
+	public static ResponseDto CreateSuccessResponse() => new(null, true, string.Empty);
+
+	public static ResponseDto CreateSuccessResponse(object? result) => new(result, true, string.Empty);
+
+	public static ResponseDto CreateErrorResponse(string message) => new(null, false, message);
 }
