@@ -28,7 +28,7 @@ public class BaseService : IBaseService
 				message.Content = new StringContent(JsonConvert.SerializeObject(requestDto.Data), Encoding.UTF8, "application/json");
 			}
 
-			message.Method = new HttpMethod(requestDto.ApiType.ToString());
+			message.Method = requestDto.ApiType;
 
 			var apiResponse = await client.SendAsync(message);
 			if (!apiResponse.IsSuccessStatusCode)

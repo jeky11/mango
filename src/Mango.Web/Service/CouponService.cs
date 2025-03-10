@@ -1,7 +1,6 @@
 using Mango.Web.Models;
 using Mango.Web.Service.IService;
 using Microsoft.Extensions.Options;
-using HttpMethod = Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.HttpMethod;
 
 namespace Mango.Web.Service;
 
@@ -13,7 +12,8 @@ public class CouponService : ICouponService
 	public CouponService(IBaseService baseService, IOptions<ServiceUrls> serviceUrls)
 	{
 		_baseService = baseService;
-		_baseUrl = new Uri(serviceUrls.Value.CouponApi);
+		var host = new Uri(serviceUrls.Value.CouponApi);
+		_baseUrl = new Uri(host, "/api/coupon");
 	}
 
 	public async Task<ResponseDto?> GetAllCouponsAsync()
@@ -22,7 +22,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Get,
-				Url = new Uri(_baseUrl, "/api/coupon").ToString(),
+				Url = _baseUrl.ToString(),
 			});
 		return responseDto;
 	}
@@ -33,7 +33,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Get,
-				Url = new Uri(_baseUrl, $"/api/coupon/{id}").ToString(),
+				Url = new Uri(_baseUrl, $"/{id}").ToString(),
 			});
 		return responseDto;
 	}
@@ -44,7 +44,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Get,
-				Url = new Uri(_baseUrl, $"/api/coupon/getByCode/{couponCode}").ToString(),
+				Url = new Uri(_baseUrl, $"/getByCode/{couponCode}").ToString(),
 			});
 		return responseDto;
 	}
@@ -55,7 +55,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Post,
-				Url = new Uri(_baseUrl, "/api/coupon").ToString(),
+				Url = _baseUrl.ToString(),
 				Data = coupon
 			});
 		return responseDto;
@@ -67,7 +67,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Put,
-				Url = new Uri(_baseUrl, "/api/coupon").ToString(),
+				Url = _baseUrl.ToString(),
 				Data = coupon
 			});
 		return responseDto;
@@ -79,7 +79,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Delete,
-				Url = new Uri(_baseUrl, $"/api/coupon/{id}").ToString(),
+				Url = new Uri(_baseUrl, $"/{id}").ToString(),
 			});
 		return responseDto;
 	}

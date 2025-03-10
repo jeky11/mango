@@ -1,5 +1,3 @@
-using HttpMethod = Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.HttpMethod;
-
 namespace Mango.Web.Models;
 
 public class RequestDto
