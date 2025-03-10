@@ -40,4 +40,17 @@ public class AuthApiController : ControllerBase
 
 		return Ok(ResponseDto.CreateSuccessResponse(loginResponse));
 	}
+
+	[HttpPost("assignRole")]
+	public async Task<IActionResult> Login([FromBody] AssignRoleRequestDto model)
+	{
+		var assignRoleSuccessful = await _authService.AssignRole(model.Email, model.Role.ToUpper());
+		if (!assignRoleSuccessful)
+		{
+			var response = ResponseDto.CreateErrorResponse("Error while assigning role.");
+			return BadRequest(response);
+		}
+
+		return Ok(ResponseDto.CreateSuccessResponse());
+	}
 }
