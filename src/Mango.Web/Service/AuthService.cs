@@ -13,8 +13,7 @@ public class AuthService : IAuthService
 	public AuthService(IBaseService baseService, IOptions<ServiceUrls> serviceUrls)
 	{
 		_baseService = baseService;
-		var host = new Uri(serviceUrls.Value.AuthApi);
-		_baseUrl = new Uri(host, "/api/auth");
+		_baseUrl = new Uri(serviceUrls.Value.AuthApi);
 	}
 
 	public async Task<ResponseDto?> RegisterAsync(RegistrationRequestDto request)
@@ -23,7 +22,7 @@ public class AuthService : IAuthService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Post,
-				Url = new Uri(_baseUrl, "/register").ToString(),
+				Url = new Uri(_baseUrl, "/api/auth/register").ToString(),
 				Data = request
 			});
 		return responseDto;
@@ -35,7 +34,7 @@ public class AuthService : IAuthService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Post,
-				Url = new Uri(_baseUrl, "/assignRole").ToString(),
+				Url = new Uri(_baseUrl, "/api/auth/assignRole").ToString(),
 				Data = request
 			});
 		return responseDto;
@@ -47,7 +46,7 @@ public class AuthService : IAuthService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Post,
-				Url = new Uri(_baseUrl, "/login").ToString(),
+				Url = new Uri(_baseUrl, "/api/auth/login").ToString(),
 				Data = request
 			});
 		return responseDto;

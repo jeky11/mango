@@ -12,8 +12,7 @@ public class CouponService : ICouponService
 	public CouponService(IBaseService baseService, IOptions<ServiceUrls> serviceUrls)
 	{
 		_baseService = baseService;
-		var host = new Uri(serviceUrls.Value.CouponApi);
-		_baseUrl = new Uri(host, "/api/coupon");
+		_baseUrl = new Uri(serviceUrls.Value.CouponApi);
 	}
 
 	public async Task<ResponseDto?> GetAllCouponsAsync()
@@ -22,7 +21,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Get,
-				Url = _baseUrl.ToString(),
+				Url = new Uri(_baseUrl, "/api/coupon").ToString(),
 			});
 		return responseDto;
 	}
@@ -33,7 +32,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Get,
-				Url = new Uri(_baseUrl, $"/{id}").ToString(),
+				Url = new Uri(_baseUrl, $"/api/coupon/{id}").ToString(),
 			});
 		return responseDto;
 	}
@@ -44,7 +43,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Get,
-				Url = new Uri(_baseUrl, $"/getByCode/{couponCode}").ToString(),
+				Url = new Uri(_baseUrl, $"/api/coupon/getByCode/{couponCode}").ToString(),
 			});
 		return responseDto;
 	}
@@ -55,7 +54,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Post,
-				Url = _baseUrl.ToString(),
+				Url = new Uri(_baseUrl, "/api/coupon").ToString(),
 				Data = coupon
 			});
 		return responseDto;
@@ -67,7 +66,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Put,
-				Url = _baseUrl.ToString(),
+				Url = new Uri(_baseUrl, "/api/coupon").ToString(),
 				Data = coupon
 			});
 		return responseDto;
@@ -79,7 +78,7 @@ public class CouponService : ICouponService
 			new RequestDto
 			{
 				ApiType = HttpMethod.Delete,
-				Url = new Uri(_baseUrl, $"/{id}").ToString(),
+				Url = new Uri(_baseUrl, $"/api/coupon/{id}").ToString(),
 			});
 		return responseDto;
 	}
