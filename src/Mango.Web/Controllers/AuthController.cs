@@ -2,6 +2,7 @@ using Mango.Web.Models;
 using Mango.Web.Service.IService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
 
 namespace Mango.Web.Controllers;
 
@@ -24,23 +25,25 @@ public class AuthController : Controller
 	[HttpPost]
 	public async Task<IActionResult> Register(RegistrationRequestDto request)
 	{
-		var registrationResult = await _authService.RegisterAsync(request);
-		if (registrationResult is not {IsSuccess: true})
+		ViewBag.RoleList = Enum.GetNames<Role>().Select(x => new SelectListItem(x, x)).ToList();
+
+		var registrationResponse = await _authService.RegisterAsync(request);
+		if (registrationResponse is not {IsSuccess: true})
 		{
-			TempData["error"] = registrationResult?.Message;
-			return RedirectToAction(nameof(Register));
+			TempData["error"] = registrationResponse?.Message;
+			return View(request);
 		}
 
-		var assignRoleResult = await _authService.AssignRoleAsync(
+		var assignRoleResponse = await _authService.AssignRoleAsync(
 			new AssignRoleRequestDto
 			{
 				Email = request.Email,
 				Role = request.Role
 			});
-		if (assignRoleResult is not {IsSuccess: true})
+		if (assignRoleResponse is not {IsSuccess: true})
 		{
-			TempData["error"] = assignRoleResult?.Message;
-			return RedirectToAction(nameof(Register));
+			TempData["error"] = assignRoleResponse?.Message;
+			return View(request);
 		}
 
 		TempData["success"] = "Registration Successful";
@@ -50,12 +53,29 @@ public class AuthController : Controller
 	[HttpGet]
 	public IActionResult Login()
 	{
-		var loginRequestDto = new LoginRequestDto
-		{
-			UserName = "",
-			Password = ""
-		};
+		var loginRequestDto = new LoginRequestDto();
 		return View(loginRequestDto);
+	}
+
+	[HttpPost]
+	public async Task<IActionResult> Login(LoginRequestDto request)
+	{
+		var loginResponse = await _authService.LoginAsync(request);
+		if (loginResponse is not {IsSuccess: true})
+		{
+			ModelState.AddModelError("CustomError", loginResponse?.Message ?? string.Empty);
+			return View(request);
+		}
+
+		var loginResult = JsonConvert.DeserializeObject<LoginResponseDto>(Convert.ToString(loginResponse.Result) ?? string.Empty);
+		if (loginResult?.User == null)
+		{
+			ModelState.AddModelError("CustomError", "Invalid username or password");
+			return View(request);
+		}
+
+		TempData["success"] = "Login Successful";
+		return RedirectToAction("Index", "Home");
 	}
 
 	[HttpGet]
