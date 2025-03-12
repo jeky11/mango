@@ -12,7 +12,7 @@ public class JwtTokenGenerator(IOptions<JwtOptions> jwtOptions) : IJwtTokenGener
 {
 	private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
-	public string GenerateToken(ApplicationUser applicationUser)
+	public string GenerateToken(ApplicationUser applicationUser, IEnumerable<string> roles)
 	{
 		var key = Encoding.ASCII.GetBytes(_jwtOptions.Secret);
 
@@ -22,6 +22,8 @@ public class JwtTokenGenerator(IOptions<JwtOptions> jwtOptions) : IJwtTokenGener
 			new(JwtRegisteredClaimNames.Sub, applicationUser.Id),
 			new(JwtRegisteredClaimNames.Name, applicationUser.UserName ?? string.Empty),
 		};
+
+		claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
 		var tokenDescriptor = new SecurityTokenDescriptor
 		{

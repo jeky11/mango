@@ -99,7 +99,16 @@ public class AuthController : Controller
 		var handler = new JwtSecurityTokenHandler();
 		var jwt = handler.ReadJwtToken(token);
 
-		var identity = new ClaimsIdentity(jwt.Claims, CookieAuthenticationDefaults.AuthenticationScheme);
+		var claimTypesToExtract = new HashSet<string>
+		{
+			JwtRegisteredClaimNames.Email,
+			JwtRegisteredClaimNames.Sub,
+			JwtRegisteredClaimNames.Name,
+			"role"
+		};
+
+		var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
+		identity.AddClaims(jwt.Claims.Where(x => claimTypesToExtract.Contains(x.Type)).Select(x => new Claim(x.Type, x.Value)));
 		identity.AddClaim(new Claim(ClaimTypes.Name, jwt.Claims.First(x => x.Type == JwtRegisteredClaimNames.Email).Value));
 
 		var principal = new ClaimsPrincipal(identity);
