@@ -1,5 +1,9 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Mango.Web.Models;
 using Mango.Web.Service.IService;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
@@ -9,10 +13,12 @@ namespace Mango.Web.Controllers;
 public class AuthController : Controller
 {
 	private readonly IAuthService _authService;
+	private readonly ITokenProvider _tokenProvider;
 
-	public AuthController(IAuthService authService)
+	public AuthController(IAuthService authService, ITokenProvider tokenProvider)
 	{
 		_authService = authService;
+		_tokenProvider = tokenProvider;
 	}
 
 	[HttpGet]
@@ -68,19 +74,35 @@ public class AuthController : Controller
 		}
 
 		var loginResult = JsonConvert.DeserializeObject<LoginResponseDto>(Convert.ToString(loginResponse.Result) ?? string.Empty);
-		if (loginResult?.User == null)
+		if (string.IsNullOrEmpty(loginResult?.Token))
 		{
 			ModelState.AddModelError("CustomError", "Invalid username or password");
 			return View(request);
 		}
 
+		await SingInUserAsync(loginResult.Token);
+		_tokenProvider.SetToken(loginResult.Token);
 		TempData["success"] = "Login Successful";
 		return RedirectToAction("Index", "Home");
 	}
 
 	[HttpGet]
-	public IActionResult Logout()
+	public async Task<IActionResult> Logout()
 	{
-		return View();
+		await HttpContext.SignOutAsync();
+		_tokenProvider.ClearToken();
+		return RedirectToAction("Index", "Home");
+	}
+
+	private async Task SingInUserAsync(string token)
+	{
+		var handler = new JwtSecurityTokenHandler();
+		var jwt = handler.ReadJwtToken(token);
+
+		var identity = new ClaimsIdentity(jwt.Claims, CookieAuthenticationDefaults.AuthenticationScheme);
+		identity.AddClaim(new Claim(ClaimTypes.Name, jwt.Claims.First(x => x.Type == JwtRegisteredClaimNames.Email).Value));
+
+		var principal = new ClaimsPrincipal(identity);
+		await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 	}
 }
