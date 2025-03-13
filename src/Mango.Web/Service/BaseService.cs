@@ -31,15 +31,6 @@ public class BaseService : IBaseService
 			message.Method = requestDto.ApiType;
 
 			var apiResponse = await client.SendAsync(message);
-			if (!apiResponse.IsSuccessStatusCode)
-			{
-				return new ResponseDto
-				{
-					IsSuccess = false,
-					Message = apiResponse.ReasonPhrase ?? apiResponse.StatusCode.ToString()
-				};
-			}
-
 			var apiContent = await apiResponse.Content.ReadAsStringAsync();
 			var apiResponseDto = JsonConvert.DeserializeObject<ResponseDto>(apiContent);
 			return apiResponseDto;
