@@ -1,11 +1,8 @@
-using System.Text;
 using Mango.Services.CouponAPI;
 using Mango.Services.CouponAPI.Data;
+using Mango.Services.CouponAPI.Extensions;
 using Mango.Services.CouponAPI.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,56 +21,9 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(
-	option =>
-	{
-		option.AddSecurityDefinition(
-			JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
-			{
-				Name = "Authorization",
-				Description = "Enter the Bearer Authorization string as following: `Bearer Generated-JWT-Token`",
-				In = ParameterLocation.Header,
-				Type = SecuritySchemeType.ApiKey,
-				Scheme = JwtBearerDefaults.AuthenticationScheme
-			});
-		option.AddSecurityRequirement(
-			new OpenApiSecurityRequirement
-			{
-				{
-					new OpenApiSecurityScheme
-					{
-						Reference = new OpenApiReference
-						{
-							Type = ReferenceType.SecurityScheme,
-							Id = JwtBearerDefaults.AuthenticationScheme
-						}
-					},
-					[]
-				}
-			});
-	});
+builder.Services.AddSwaggerGen(option => option.AddAddSecurity());
 
-var issuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtOptions.Secret));
-
-builder.Services.AddAuthentication(
-		x =>
-		{
-			x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-			x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-		})
-	.AddJwtBearer(
-		x =>
-		{
-			x.TokenValidationParameters = new TokenValidationParameters
-			{
-				ValidateIssuerSigningKey = true,
-				ValidateIssuer = true,
-				ValidateAudience = true,
-				IssuerSigningKey = issuerSigningKey,
-				ValidIssuer = jwtOptions.Issuer,
-				ValidAudience = jwtOptions.Audience
-			};
-		});
+builder.Services.AddAppAuthentication(jwtOptions);
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
