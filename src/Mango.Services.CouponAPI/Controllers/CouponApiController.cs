@@ -82,6 +82,7 @@ public class CouponApiController : ControllerBase
 	}
 
 	[HttpPost]
+	[Authorize(Roles = nameof(Role.ADMIN))]
 	public ResponseDto Post([FromBody] CouponDto couponDto)
 	{
 		try
@@ -102,6 +103,7 @@ public class CouponApiController : ControllerBase
 	}
 
 	[HttpPut]
+	[Authorize(Roles = nameof(Role.ADMIN))]
 	public ResponseDto Put([FromBody] CouponDto couponDto)
 	{
 		try
@@ -123,6 +125,7 @@ public class CouponApiController : ControllerBase
 
 	[HttpDelete]
 	[Route("{id:int}")]
+	[Authorize(Roles = nameof(Role.ADMIN))]
 	public ResponseDto Delete(int id)
 	{
 		try

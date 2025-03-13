@@ -14,6 +14,7 @@ public class CouponController : Controller
 		_couponService = couponService;
 	}
 
+	[HttpGet]
 	public async Task<IActionResult> Index()
 	{
 		var response = await _couponService.GetAllCouponsAsync();
@@ -33,6 +34,7 @@ public class CouponController : Controller
 		return View(coupons);
 	}
 
+	[HttpGet]
 	public IActionResult Create()
 	{
 		return View();
@@ -43,19 +45,21 @@ public class CouponController : Controller
 	{
 		if (!ModelState.IsValid)
 		{
-			return View();
+			return View(coupon);
 		}
 
 		var response = await _couponService.CreateCouponAsync(coupon);
 		if (response is not {IsSuccess: true})
 		{
 			TempData["error"] = response?.Message;
+			return View(coupon);
 		}
 
 		TempData["success"] = "Coupon created successfully";
 		return RedirectToAction(nameof(Index));
 	}
 
+	[HttpGet]
 	public async Task<IActionResult> Delete(int id)
 	{
 		var response = await _couponService.GetCouponAsync(id);
@@ -83,6 +87,7 @@ public class CouponController : Controller
 		if (response is not {IsSuccess: true})
 		{
 			TempData["error"] = response?.Message;
+			return RedirectToAction(nameof(Index));
 		}
 
 		TempData["success"] = "Coupon deleted successfully";
