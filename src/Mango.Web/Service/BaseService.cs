@@ -33,6 +33,16 @@ public class BaseService : IBaseService
 			var apiResponse = await client.SendAsync(message);
 			var apiContent = await apiResponse.Content.ReadAsStringAsync();
 			var apiResponseDto = JsonConvert.DeserializeObject<ResponseDto>(apiContent);
+
+			if (!apiResponse.IsSuccessStatusCode && apiResponseDto == null)
+			{
+				apiResponseDto = new ResponseDto
+				{
+					IsSuccess = false,
+					Message = apiResponse.ReasonPhrase ?? apiResponse.StatusCode.ToString()
+				};
+			}
+
 			return apiResponseDto;
 		}
 		catch (Exception e)
