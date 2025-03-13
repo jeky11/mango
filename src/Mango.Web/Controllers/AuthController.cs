@@ -69,14 +69,14 @@ public class AuthController : Controller
 		var loginResponse = await _authService.LoginAsync(request);
 		if (loginResponse is not {IsSuccess: true})
 		{
-			ModelState.AddModelError("CustomError", loginResponse?.Message ?? string.Empty);
+			TempData["error"] = loginResponse?.Message;
 			return View(request);
 		}
 
 		var loginResult = JsonConvert.DeserializeObject<LoginResponseDto>(Convert.ToString(loginResponse.Result) ?? string.Empty);
 		if (string.IsNullOrEmpty(loginResult?.Token))
 		{
-			ModelState.AddModelError("CustomError", "Invalid username or password");
+			TempData["error"] = "Invalid username or password";
 			return View(request);
 		}
 
