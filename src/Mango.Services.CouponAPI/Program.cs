@@ -5,6 +5,7 @@ using Mango.Services.CouponAPI.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +24,34 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(
+	option =>
+	{
+		option.AddSecurityDefinition(
+			JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+			{
+				Name = "Authorization",
+				Description = "Enter the Bearer Authorization string as following: `Bearer Generated-JWT-Token`",
+				In = ParameterLocation.Header,
+				Type = SecuritySchemeType.ApiKey,
+				Scheme = JwtBearerDefaults.AuthenticationScheme
+			});
+		option.AddSecurityRequirement(
+			new OpenApiSecurityRequirement
+			{
+				{
+					new OpenApiSecurityScheme
+					{
+						Reference = new OpenApiReference
+						{
+							Type = ReferenceType.SecurityScheme,
+							Id = JwtBearerDefaults.AuthenticationScheme
+						}
+					},
+					[]
+				}
+			});
+	});
 
 var issuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtOptions.Secret));
 
