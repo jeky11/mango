@@ -24,7 +24,7 @@ public class AuthService : IAuthService
 				ApiType = HttpMethod.Post,
 				Url = new Uri(_baseUrl, "/api/auth/register").ToString(),
 				Data = request
-			});
+			}, false);
 		return responseDto;
 	}
 
@@ -48,7 +48,7 @@ public class AuthService : IAuthService
 				ApiType = HttpMethod.Post,
 				Url = new Uri(_baseUrl, "/api/auth/login").ToString(),
 				Data = request
-			});
+			}, false);
 		return responseDto;
 	}
 }
