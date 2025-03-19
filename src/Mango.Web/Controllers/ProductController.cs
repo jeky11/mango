@@ -60,6 +60,41 @@ public class ProductController : Controller
 	}
 
 	[HttpGet]
+	public async Task<IActionResult> Edit(int id)
+	{
+		var response = await _productService.GetProductAsync(id);
+		if (response?.Result == null || !response.IsSuccess)
+		{
+			TempData["error"] = response?.Message;
+			return RedirectToAction(nameof(Index));
+		}
+
+		var resultStr = Convert.ToString(response.Result);
+		if (resultStr == null)
+		{
+			return BadRequest();
+		}
+
+		var product = JsonConvert.DeserializeObject<ProductDto>(resultStr);
+
+		return View(product);
+	}
+
+	[HttpPost]
+	public async Task<IActionResult> Edit(ProductDto product)
+	{
+		var response = await _productService.UpdateProductAsync(product);
+		if (response is not {IsSuccess: true})
+		{
+			TempData["error"] = response?.Message;
+			return RedirectToAction(nameof(Index));
+		}
+
+		TempData["success"] = "Product updated successfully";
+		return RedirectToAction(nameof(Index));
+	}
+
+	[HttpGet]
 	public async Task<IActionResult> Delete(int id)
 	{
 		var response = await _productService.GetProductAsync(id);
