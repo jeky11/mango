@@ -1,4 +1,4 @@
-namespace Mango.Services.ProductAPI.Models;
+namespace Mango.Services.Infrastructure.Models;
 
 public record JwtOptions
 {

@@ -1,7 +1,7 @@
+using Mango.Services.Infrastructure.Extensions;
+using Mango.Services.Infrastructure.Models;
 using Mango.Services.ProductAPI;
 using Mango.Services.ProductAPI.Data;
-using Mango.Services.ProductAPI.Extensions;
-using Mango.Services.ProductAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

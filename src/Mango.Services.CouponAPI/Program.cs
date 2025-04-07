@@ -1,7 +1,7 @@
 using Mango.Services.CouponAPI;
 using Mango.Services.CouponAPI.Data;
-using Mango.Services.CouponAPI.Extensions;
-using Mango.Services.CouponAPI.Models;
+using Mango.Services.Infrastructure.Extensions;
+using Mango.Services.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -1,9 +1,10 @@
 using System.Text;
-using Mango.Services.ProductAPI.Models;
+using Mango.Services.Infrastructure.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Mango.Services.ProductAPI.Extensions;
+namespace Mango.Services.Infrastructure.Extensions;
 
 public static class ServiceCollectionExtensions
 {
