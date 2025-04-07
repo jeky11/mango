@@ -1,4 +1,5 @@
 using AutoMapper;
+using Mango.Services.Infrastructure.Models.Dto;
 using Mango.Services.ProductAPI.Data;
 using Mango.Services.ProductAPI.Models;
 using Mango.Services.ProductAPI.Models.Dto;
