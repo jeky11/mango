@@ -1,11 +1,30 @@
 using Mango.Services.Infrastructure.Extensions;
+using Mango.Services.Infrastructure.Models;
+using Mango.Services.ShoppingCartAPI;
+using Mango.Services.ShoppingCartAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+var jwtOptions = builder.Configuration.GetRequiredSection("JwtOptions").Get<JwtOptions>() ?? new JwtOptions();
+
+builder.Services.AddDbContext<AppDbContext>(
+	options =>
+	{
+		options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+	});
+var mapper = MappingConfig.RegisterMaps().CreateMapper();
+builder.Services.AddSingleton(mapper);
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddControllers();
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(option => option.AddAddSecurity());
+
+builder.Services.AddAppAuthentication(jwtOptions);
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -17,9 +36,21 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
+ApplyMigrations();
 app.Run();
+
+void ApplyMigrations()
+{
+	using (var scope = app.Services.CreateScope())
+	{
+		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+		if (db.Database.GetPendingMigrations().Any())
+		{
+			db.Database.Migrate();
+		}
+	}
+}
