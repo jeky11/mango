@@ -12,8 +12,8 @@ public class CartHeader
 	public string? CouponCode { get; set; }
 
 	[NotMapped]
-	public double Discount { get; set; }
+	public decimal Discount { get; set; }
 
 	[NotMapped]
-	public double CartTotal { get; set; }
+	public decimal CartTotal { get; set; }
 }

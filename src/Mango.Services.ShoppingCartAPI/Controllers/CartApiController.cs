@@ -16,12 +16,14 @@ public class CartApiController : ControllerBase
 	private readonly IMapper _mapper;
 	private readonly AppDbContext _db;
 	private readonly IProductService _productService;
+	protected readonly ICouponService _couponService;
 
-	public CartApiController(IMapper mapper, AppDbContext db, IProductService productService)
+	public CartApiController(IMapper mapper, AppDbContext db, IProductService productService, ICouponService couponService)
 	{
 		_mapper = mapper;
 		_db = db;
 		_productService = productService;
+		_couponService = couponService;
 	}
 
 	[HttpGet("get/{userId}")]
@@ -38,7 +40,17 @@ public class CartApiController : ControllerBase
 			foreach (var item in cartDetails)
 			{
 				item.Product = productDtos.First(x => x.ProductId == item.ProductId);
-				cartHeader.CartTotal += item.Count * item.Product.Price;
+				cartHeader.CartTotal += item.Count * (decimal)item.Product.Price;
+			}
+
+			if (!string.IsNullOrEmpty(cartHeader.CouponCode))
+			{
+				var coupon = await _couponService.GetCoupon(cartHeader.CouponCode);
+				if (coupon != null && cartHeader.CartTotal > coupon.MinAmount)
+				{
+					cartHeader.CartTotal -= coupon.DiscountAmount;
+					cartHeader.Discount = coupon.DiscountAmount;
+				}
 			}
 
 			var cart = new CartDto
@@ -48,6 +60,37 @@ public class CartApiController : ControllerBase
 			};
 
 			return new ResponseDto {Result = cart};
+		}
+		catch (Exception e)
+		{
+			return new ResponseDto
+			{
+				Message = e.Message,
+				IsSuccess = false,
+			};
+		}
+	}
+
+	[HttpPost("applyCoupon")]
+	public async Task<ResponseDto> ApplyCoupon([FromBody] CartDto cartDto)
+	{
+		try
+		{
+			if (cartDto.CartHeader == null)
+			{
+				return new ResponseDto
+				{
+					Message = "Invalid cart",
+					IsSuccess = false,
+				};
+			}
+
+			var cartFromDb = await _db.CartHeaders.FirstAsync(x => x.UserId == cartDto.CartHeader.UserId);
+			cartFromDb.CouponCode = cartDto.CartHeader.CouponCode;
+			_db.CartHeaders.Update(cartFromDb);
+			await _db.SaveChangesAsync();
+
+			return new ResponseDto {Result = true};
 		}
 		catch (Exception e)
 		{
