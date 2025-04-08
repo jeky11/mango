@@ -6,86 +6,150 @@ using Mango.Services.ShoppingCartAPI.Models.Dto;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Mango.Services.ShoppingCartAPI.Controllers
+namespace Mango.Services.ShoppingCartAPI.Controllers;
+
+[Route("api/cart")]
+[ApiController]
+public class CartApiController : ControllerBase
 {
-	[Route("api/cart")]
-	[ApiController]
-	public class CartApiController : ControllerBase
+	private readonly IMapper _mapper;
+	private readonly AppDbContext _db;
+
+	public CartApiController(IMapper mapper, AppDbContext db)
 	{
-		private readonly IMapper _mapper;
-		private readonly AppDbContext _db;
+		_mapper = mapper;
+		_db = db;
+	}
 
-		public CartApiController(IMapper mapper, AppDbContext db)
+	[HttpGet("get/{userId}")]
+	public async Task<ResponseDto> GetCart(string userId)
+	{
+		try
 		{
-			_mapper = mapper;
-			_db = db;
-		}
+			var cartHeader = _mapper.Map<CartHeaderDto>(await _db.CartHeaders.FirstAsync(u => u.UserId == userId));
+			var cartDetails = _mapper.Map<IEnumerable<CartDetailsDto>>(_db.CartDetails.Where(u => u.CartHeaderId == cartHeader.CartHeaderId))
+				.ToList();
 
-		[HttpPost("upsert")]
-		public async Task<ResponseDto> Upsert(CartDto cartDto)
-		{
-			try
+			foreach (var item in cartDetails)
 			{
-				if (cartDto.CartHeader == null || cartDto.CartDetails == null || !cartDto.CartDetails.Any())
+				item.CartHeader.CartTotal += item.Count * item.Product.Price;
+			}
+
+			var cart = new CartDto
+			{
+				CartHeader = cartHeader,
+				CartDetails = cartDetails
+			};
+
+			return new ResponseDto {Result = cart};
+		}
+		catch (Exception e)
+		{
+			return new ResponseDto
+			{
+				Message = e.Message,
+				IsSuccess = false,
+			};
+		}
+	}
+
+	[HttpPost("upsert")]
+	public async Task<ResponseDto> Upsert(CartDto cartDto)
+	{
+		try
+		{
+			if (cartDto.CartHeader == null || cartDto.CartDetails == null || !cartDto.CartDetails.Any())
+			{
+				return new ResponseDto
 				{
-					return new ResponseDto
-					{
-						Message = "Invalid cart",
-						IsSuccess = false,
-					};
-				}
+					Message = "Invalid cart",
+					IsSuccess = false,
+				};
+			}
 
-				var cartDetailsDto = cartDto.CartDetails.First();
+			var cartDetailsDto = cartDto.CartDetails.First();
 
-				var cartHeaderFromDb = await _db.CartHeaders.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == cartDto.CartHeader.UserId);
-				if (cartHeaderFromDb == null)
+			var cartHeaderFromDb = await _db.CartHeaders.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == cartDto.CartHeader.UserId);
+			if (cartHeaderFromDb == null)
+			{
+				// create header and details
+				var cartHeader = _mapper.Map<CartHeader>(cartDto.CartHeader);
+				_db.CartHeaders.Add(cartHeader);
+				await _db.SaveChangesAsync();
+
+				cartDetailsDto.CartHeaderId = cartHeader.CartHeaderId;
+				var cartDetails = _mapper.Map<CartDetails>(cartDetailsDto);
+				cartDetails.CartHeader = null;
+				_db.CartDetails.Add(cartDetails);
+				await _db.SaveChangesAsync();
+			}
+			else
+			{
+				var cartDetailsFromDb = await _db.CartDetails.AsNoTracking()
+					.FirstOrDefaultAsync(
+						u =>
+							u.ProductId == cartDetailsDto.ProductId &&
+							u.CartHeaderId == cartHeaderFromDb.CartHeaderId);
+				if (cartDetailsFromDb == null)
 				{
-					// create header and details
-					var cartHeader = _mapper.Map<CartHeader>(cartDto.CartHeader);
-					_db.CartHeaders.Add(cartHeader);
-					await _db.SaveChangesAsync();
-
-					cartDetailsDto.CartHeaderId = cartHeader.CartHeaderId;
+					// create cart details
+					cartDetailsDto.CartHeaderId = cartHeaderFromDb.CartHeaderId;
 					var cartDetails = _mapper.Map<CartDetails>(cartDetailsDto);
+					cartDetails.CartHeader = null;
 					_db.CartDetails.Add(cartDetails);
 					await _db.SaveChangesAsync();
 				}
 				else
 				{
-					var cartDetailsFromDb = await _db.CartDetails.AsNoTracking().FirstOrDefaultAsync(
-						u =>
-							u.ProductId == cartDetailsDto.ProductId &&
-							u.CartHeaderId == cartHeaderFromDb.CartHeaderId);
-					if (cartDetailsFromDb == null)
-					{
-						// create cart details
-						cartDetailsDto.CartHeaderId = cartHeaderFromDb.CartHeaderId;
-						var cartDetails = _mapper.Map<CartDetails>(cartDetailsDto);
-						_db.CartDetails.Add(cartDetails);
-						await _db.SaveChangesAsync();
-					}
-					else
-					{
-						// update count in cart details
-						cartDetailsDto.Count += cartDetailsFromDb.Count;
-						cartDetailsDto.CartHeaderId = cartDetailsFromDb.CartHeaderId;
-						cartDetailsDto.CartDetailsId = cartDetailsFromDb.CartDetailsId;
-						var cartDetails = _mapper.Map<CartDetails>(cartDetailsDto);
-						_db.CartDetails.Update(cartDetails);
-						await _db.SaveChangesAsync();
-					}
+					// update count in cart details
+					cartDetailsDto.Count += cartDetailsFromDb.Count;
+					cartDetailsDto.CartHeaderId = cartDetailsFromDb.CartHeaderId;
+					cartDetailsDto.CartDetailsId = cartDetailsFromDb.CartDetailsId;
+					var cartDetails = _mapper.Map<CartDetails>(cartDetailsDto);
+					cartDetails.CartHeader = null;
+					_db.CartDetails.Update(cartDetails);
+					await _db.SaveChangesAsync();
 				}
+			}
 
-				return new ResponseDto {Result = cartDto};
-			}
-			catch (Exception e)
+			return new ResponseDto {Result = cartDto};
+		}
+		catch (Exception e)
+		{
+			return new ResponseDto
 			{
-				return new ResponseDto
-				{
-					Message = e.Message,
-					IsSuccess = false,
-				};
+				Message = e.Message,
+				IsSuccess = false,
+			};
+		}
+	}
+
+	[HttpPost("remove")]
+	public async Task<ResponseDto> Remove([FromBody] int cartDetailsId)
+	{
+		try
+		{
+			var cartDetails = await _db.CartDetails.FirstAsync(u => u.CartDetailsId == cartDetailsId);
+			_db.CartDetails.Remove(cartDetails);
+
+			var totalCountOfCartItem = _db.CartDetails.Count(u => u.CartHeaderId == cartDetails.CartHeaderId);
+			if (totalCountOfCartItem == 1)
+			{
+				var cartHeaderToRemove = await _db.CartHeaders.FirstAsync(u => u.CartHeaderId == cartDetails.CartHeaderId);
+				_db.CartHeaders.Remove(cartHeaderToRemove);
 			}
+
+			await _db.SaveChangesAsync();
+
+			return new ResponseDto {Result = true};
+		}
+		catch (Exception e)
+		{
+			return new ResponseDto
+			{
+				Message = e.Message,
+				IsSuccess = false,
+			};
 		}
 	}
 }
