@@ -61,4 +61,16 @@ public class CartService : ICartService
 			});
 		return responseDto;
 	}
+
+	public async Task<ResponseDto?> EmailCartAsync(CartDto cart)
+	{
+		var responseDto = await _baseService.SendAsync(
+			new RequestDto
+			{
+				ApiType = HttpMethod.Post,
+				Url = new Uri(_baseUrl, "/api/cart/emailCartRequest").ToString(),
+				Data = cart
+			});
+		return responseDto;
+	}
 }

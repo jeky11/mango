@@ -1,4 +1,5 @@
 using AutoMapper;
+using Mango.MessageBus;
 using Mango.Services.Infrastructure.Models.Dto;
 using Mango.Services.ShoppingCartAPI.Data;
 using Mango.Services.ShoppingCartAPI.Models;
@@ -6,6 +7,7 @@ using Mango.Services.ShoppingCartAPI.Models.Dto;
 using Mango.Services.ShoppingCartAPI.Service.IService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Mango.Services.ShoppingCartAPI.Controllers;
 
@@ -16,14 +18,24 @@ public class CartApiController : ControllerBase
 	private readonly IMapper _mapper;
 	private readonly AppDbContext _db;
 	private readonly IProductService _productService;
-	protected readonly ICouponService _couponService;
+	private readonly ICouponService _couponService;
+	private readonly IMessageBus _messageBus;
+	private readonly TopicAndQueueNames _topicAndQueueNames;
 
-	public CartApiController(IMapper mapper, AppDbContext db, IProductService productService, ICouponService couponService)
+	public CartApiController(
+		IMapper mapper,
+		AppDbContext db,
+		IProductService productService,
+		ICouponService couponService,
+		IMessageBus messageBus,
+		IOptions<TopicAndQueueNames> topicAndQueueNames)
 	{
 		_mapper = mapper;
 		_db = db;
 		_productService = productService;
 		_couponService = couponService;
+		_messageBus = messageBus;
+		_topicAndQueueNames = topicAndQueueNames.Value;
 	}
 
 	[HttpGet("get/{userId}")]
@@ -135,10 +147,9 @@ public class CartApiController : ControllerBase
 			else
 			{
 				var cartDetailsFromDb = await _db.CartDetails.AsNoTracking()
-					.FirstOrDefaultAsync(
-						u =>
-							u.ProductId == cartDetailsDto.ProductId &&
-							u.CartHeaderId == cartHeaderFromDb.CartHeaderId);
+					.FirstOrDefaultAsync(u =>
+						u.ProductId == cartDetailsDto.ProductId &&
+						u.CartHeaderId == cartHeaderFromDb.CartHeaderId);
 				if (cartDetailsFromDb == null)
 				{
 					// create cart details
@@ -189,6 +200,25 @@ public class CartApiController : ControllerBase
 			}
 
 			await _db.SaveChangesAsync();
+
+			return new ResponseDto {Result = true};
+		}
+		catch (Exception e)
+		{
+			return new ResponseDto
+			{
+				Message = e.Message,
+				IsSuccess = false,
+			};
+		}
+	}
+
+	[HttpPost("emailCartRequest")]
+	public async Task<ResponseDto> EmailCartRequest([FromBody] CartDto cartDto)
+	{
+		try
+		{
+			await _messageBus.PublishMessage(cartDto, _topicAndQueueNames.EmailShoppingCart);
 
 			return new ResponseDto {Result = true};
 		}

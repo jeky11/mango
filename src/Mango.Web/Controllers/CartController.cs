@@ -95,4 +95,18 @@ public class CartController : Controller
 		var cartDto = JsonConvert.DeserializeObject<CartDto>(responseStr);
 		return cartDto ?? new CartDto();
 	}
+
+	[HttpPost]
+	public async Task<IActionResult> EmailCart(CartDto cartDto)
+	{
+		var response = await _cartService.EmailCartAsync(cartDto);
+		if (response?.Result == null || !response.IsSuccess)
+		{
+			TempData["error"] = response?.Message;
+			return RedirectToAction(nameof(Index));
+		}
+
+		TempData["success"] = "Email will be sent shortly.";
+		return RedirectToAction(nameof(Index));
+	}
 }
