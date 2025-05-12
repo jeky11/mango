@@ -21,7 +21,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(option => option.AddAddSecurity());
+builder.Services.AddSwaggerGen(option => option.AddSecurity());
 
 builder.Services.AddAppAuthentication(jwtOptions);
 builder.Services.AddAuthorization();

@@ -7,7 +7,7 @@ namespace Mango.Services.Infrastructure.Extensions;
 
 public static class SwaggerGenOptionsExtensions
 {
-	public static SwaggerGenOptions AddAddSecurity(this SwaggerGenOptions swaggerGenOptions)
+	public static SwaggerGenOptions AddSecurity(this SwaggerGenOptions swaggerGenOptions)
 	{
 		swaggerGenOptions.AddSecurityDefinition(
 			JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
