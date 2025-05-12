@@ -17,11 +17,11 @@ var serviceUrls = builder.Configuration.GetRequiredSection(nameof(ServiceUrls)).
 var jwtOptions = builder.Configuration.GetRequiredSection(nameof(JwtOptions)).Get<JwtOptions>() ?? new JwtOptions();
 builder.Services.Configure<TopicAndQueueNames>(builder.Configuration.GetSection(nameof(TopicAndQueueNames)));
 
-builder.Services.AddDbContext<AppDbContext>(
-	options =>
-	{
-		options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-	});
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
 var mapper = MappingConfig.RegisterMaps().CreateMapper();
 builder.Services.AddSingleton(mapper);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
