@@ -22,11 +22,11 @@ public class AzureServiceBusConsumer : IAzureServiceBusConsumer
 		_emailCartProcessor = client.CreateProcessor(_emailCartQueue);
 	}
 
-	public Task StartAsync()
+	public async Task StartAsync()
 	{
 		_emailCartProcessor.ProcessMessageAsync += OnEmailCartRequestReceived;
 		_emailCartProcessor.ProcessErrorAsync += ErrorHandler;
-		return Task.CompletedTask;
+		await _emailCartProcessor.StartProcessingAsync();
 	}
 
 	public async Task StopAsync()
