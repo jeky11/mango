@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Mango.Services.Infrastructure.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class AuthenticationExtensions
 {
 	public static IServiceCollection AddAppAuthentication(this IServiceCollection serviceCollection, JwtOptions jwtOptions)
 	{

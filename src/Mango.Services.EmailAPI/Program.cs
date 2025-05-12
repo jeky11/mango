@@ -1,4 +1,5 @@
 using Mango.Services.EmailAPI.Data;
+using Mango.Services.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,18 +29,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-ApplyMigrations();
+
+app.Services.ApplyMigrations<AppDbContext>();
+
 app.Run();
-
-void ApplyMigrations()
-{
-	using (var scope = app.Services.CreateScope())
-	{
-		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-		if (db.Database.GetPendingMigrations().Any())
-		{
-			db.Database.Migrate();
-		}
-	}
-}
-

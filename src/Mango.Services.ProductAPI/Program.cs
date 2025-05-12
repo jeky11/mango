@@ -9,11 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 var jwtOptions = builder.Configuration.GetRequiredSection("JwtOptions").Get<JwtOptions>() ?? new JwtOptions();
 
-builder.Services.AddDbContext<AppDbContext>(
-	options =>
-	{
-		options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-	});
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
 var mapper = MappingConfig.RegisterMaps().CreateMapper();
 builder.Services.AddSingleton(mapper);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -40,17 +39,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-ApplyMigrations();
-app.Run();
 
-void ApplyMigrations()
-{
-	using (var scope = app.Services.CreateScope())
-	{
-		var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-		if (db.Database.GetPendingMigrations().Any())
-		{
-			db.Database.Migrate();
-		}
-	}
-}
+app.Services.ApplyMigrations<AppDbContext>();
+
+app.Run();
