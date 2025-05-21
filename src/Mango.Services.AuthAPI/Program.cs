@@ -1,3 +1,4 @@
+using Mango.MessageBus;
 using Mango.Services.AuthAPI.Data;
 using Mango.Services.AuthAPI.Models;
 using Mango.Services.AuthAPI.Service;
@@ -9,7 +10,9 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+var messageBusConnection = builder.Configuration.GetConnectionString("MessageBusConnection") ?? throw new NullReferenceException();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("ApiSettings:JwtOptions"));
+builder.Services.Configure<TopicAndQueueNames>(builder.Configuration.GetSection(nameof(TopicAndQueueNames)));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -20,6 +23,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 	.AddDefaultTokenProviders();
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<IMessageBus, MessageBus>(_ => new MessageBus(messageBusConnection));
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
