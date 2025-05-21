@@ -218,7 +218,7 @@ public class CartApiController : ControllerBase
 	{
 		try
 		{
-			await _messageBus.PublishMessage(cartDto, _topicAndQueueNames.EmailShoppingCartQueue);
+			await _messageBus.PublishMessageAsync(cartDto, _topicAndQueueNames.EmailShoppingCartQueue);
 
 			return new ResponseDto {Result = true};
 		}

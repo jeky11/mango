@@ -8,7 +8,7 @@ public class MessageBus(string connectionString) : IMessageBus
 {
 	private readonly string _connectionString = connectionString;
 
-	public async Task PublishMessage(object message, string topicOrQueueName)
+	public async Task PublishMessageAsync(object message, string topicOrQueueName)
 	{
 		await using var client = new ServiceBusClient(_connectionString);
 
