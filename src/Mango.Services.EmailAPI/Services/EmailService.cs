@@ -34,6 +34,12 @@ public class EmailService(AppDbContext context) : IEmailService
 		await LogAndEmailAsync(message.ToString(), cartDto.CartHeader.Email);
 	}
 
+	public async Task RegisterUserEmailAndLogAsync(string email)
+	{
+		var message = "User Registered. <br/> Email: " + email;
+		await LogAndEmailAsync(message, "dotnetmastery@gmail.com");
+	}
+
 	private async Task<bool> LogAndEmailAsync(string message, string email)
 	{
 		try
