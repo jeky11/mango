@@ -1,4 +1,5 @@
 using Mango.MessageBus;
+using Mango.Services.Infrastructure;
 using Mango.Services.Infrastructure.Extensions;
 using Mango.Services.Infrastructure.Models;
 using Mango.Services.ShoppingCartAPI;
@@ -6,7 +7,6 @@ using Mango.Services.ShoppingCartAPI.Data;
 using Mango.Services.ShoppingCartAPI.Models;
 using Mango.Services.ShoppingCartAPI.Service;
 using Mango.Services.ShoppingCartAPI.Service.IService;
-using Mango.Services.ShoppingCartAPI.Utility;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
