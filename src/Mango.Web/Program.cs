@@ -14,6 +14,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddHttpClient<IProductService, ProductService>();
 builder.Services.AddHttpClient<ICouponService, CouponService>();
 builder.Services.AddHttpClient<ICartService, CartService>();
+builder.Services.AddHttpClient<IOrderService, OrderService>();
 builder.Services.AddHttpClient<IAuthService, AuthService>();
 
 builder.Services.AddScoped<ITokenProvider, TokenProvider>();
@@ -21,15 +22,15 @@ builder.Services.AddScoped<IBaseService, BaseService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICouponService, CouponService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-	.AddCookie(
-		options =>
-		{
-			options.ExpireTimeSpan = TimeSpan.FromHours(10);
-			options.LoginPath = "/Auth/Login";
-			options.AccessDeniedPath = "/Auth/AccessDenied";
-		});
+	.AddCookie(options =>
+	{
+		options.ExpireTimeSpan = TimeSpan.FromHours(10);
+		options.LoginPath = "/Auth/Login";
+		options.AccessDeniedPath = "/Auth/AccessDenied";
+	});
 
 var app = builder.Build();
 

@@ -11,10 +11,12 @@ namespace Mango.Web.Controllers;
 public class CartController : Controller
 {
 	private readonly ICartService _cartService;
+	private readonly IOrderService _orderService;
 
-	public CartController(ICartService cartService)
+	public CartController(ICartService cartService, IOrderService orderService)
 	{
 		_cartService = cartService;
+		_orderService = orderService;
 	}
 
 	[HttpGet]
@@ -22,11 +24,49 @@ public class CartController : Controller
 	{
 		return View(await LoadCartDtoBasedOnLoggedInUser());
 	}
-	
+
 	[HttpGet]
 	public async Task<IActionResult> Checkout()
 	{
 		return View(await LoadCartDtoBasedOnLoggedInUser());
+	}
+
+	[HttpPost]
+	public async Task<IActionResult> Checkout(CartDto cartDto)
+	{
+		var cart = await LoadCartDtoBasedOnLoggedInUser();
+
+		if (cartDto.CartHeader == null || cart.CartHeader == null)
+		{
+			TempData["error"] = "Invalid cart";
+			return RedirectToAction(nameof(Index));
+		}
+
+		cart.CartHeader.Phone = cartDto.CartHeader.Phone;
+		cart.CartHeader.Email = cartDto.CartHeader.Email;
+		cart.CartHeader.FirstName = cartDto.CartHeader.FirstName;
+		cart.CartHeader.LastName = cartDto.CartHeader.LastName;
+
+		var response = await _orderService.CreateOrderAsync(cart);
+		if (response?.Result == null || !response.IsSuccess)
+		{
+			TempData["error"] = response?.Message;
+			return RedirectToAction(nameof(Index));
+		}
+
+		var responseStr = Convert.ToString(response.Result);
+		if (responseStr == null)
+		{
+			return RedirectToAction(nameof(Index));
+		}
+
+		var orderHeaderDto = JsonConvert.DeserializeObject<OrderHeaderDto>(responseStr);
+		if (orderHeaderDto == null)
+		{
+			return RedirectToAction(nameof(Index));
+		}
+
+		return RedirectToAction(nameof(Index));
 	}
 
 	[HttpGet]

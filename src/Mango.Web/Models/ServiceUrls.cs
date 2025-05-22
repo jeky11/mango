@@ -6,4 +6,5 @@ public class ServiceUrls
 	public required string CouponApi { get; set; }
 	public required string ShoppingCartApi { get; set; }
 	public required string AuthApi { get; set; }
+	public required string OrderApi { get; set; }
 }
