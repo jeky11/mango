@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.Configure<ServiceUrls>(builder.Configuration.GetSection(nameof(ServiceUrls)));
+builder.Services.Configure<ServiceUrls>(builder.Configuration.GetRequiredSection(nameof(ServiceUrls)));
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();

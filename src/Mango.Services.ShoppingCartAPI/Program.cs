@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 var messageBusConnection = builder.Configuration.GetConnectionString("MessageBusConnection") ?? throw new NullReferenceException();
 var serviceUrls = builder.Configuration.GetRequiredSection(nameof(ServiceUrls)).Get<ServiceUrls>() ?? throw new NullReferenceException();
 var jwtOptions = builder.Configuration.GetRequiredSection(nameof(JwtOptions)).Get<JwtOptions>() ?? new JwtOptions();
-builder.Services.Configure<TopicAndQueueNames>(builder.Configuration.GetSection(nameof(TopicAndQueueNames)));
+builder.Services.Configure<TopicAndQueueNames>(builder.Configuration.GetRequiredSection(nameof(TopicAndQueueNames)));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {

@@ -8,8 +8,8 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.Configure<ConnectionStrings>(builder.Configuration.GetSection(nameof(ConnectionStrings)));
-builder.Services.Configure<TopicAndQueueNames>(builder.Configuration.GetSection(nameof(TopicAndQueueNames)));
+builder.Services.Configure<ConnectionStrings>(builder.Configuration.GetRequiredSection(nameof(ConnectionStrings)));
+builder.Services.Configure<TopicAndQueueNames>(builder.Configuration.GetRequiredSection(nameof(TopicAndQueueNames)));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
