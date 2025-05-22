@@ -4,16 +4,17 @@ using Mango.Services.Infrastructure.Models;
 using Mango.Services.OrderAPI;
 using Mango.Services.OrderAPI.Data;
 using Mango.Services.OrderAPI.Models;
-using Mango.Services.OrderAPI.Service;
 using Mango.Services.OrderAPI.Service.IService;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
+using ProductService = Mango.Services.OrderAPI.Service.ProductService;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var serviceUrls = builder.Configuration.GetRequiredSection(nameof(ServiceUrls)).Get<ServiceUrls>() ?? throw new NullReferenceException();
 var jwtOptions = builder.Configuration.GetRequiredSection(nameof(JwtOptions)).Get<JwtOptions>() ?? new JwtOptions();
-builder.Services.Configure<StripeOptions>(builder.Configuration.GetRequiredSection(nameof(StripeOptions)));
+var stripeOptions = builder.Configuration.GetRequiredSection(nameof(StripeOptions)).Get<StripeOptions>() ?? throw new NullReferenceException();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -45,6 +46,8 @@ if (app.Environment.IsDevelopment())
 	app.UseSwagger();
 	app.UseSwaggerUI();
 }
+
+StripeConfiguration.ApiKey = stripeOptions.SecretKey;
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

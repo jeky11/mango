@@ -20,4 +20,16 @@ public class OrderService(IBaseService baseService, IOptions<ServiceUrls> servic
 			});
 		return responseDto;
 	}
+
+	public async Task<ResponseDto?> CreateStripeSessionAsync(StripeRequestDto stripeRequestDto)
+	{
+		var responseDto = await _baseService.SendAsync(
+			new RequestDto
+			{
+				ApiType = HttpMethod.Post,
+				Url = new Uri(_baseUrl, "/api/order/createStripeSession").ToString(),
+				Data = stripeRequestDto
+			});
+		return responseDto;
+	}
 }

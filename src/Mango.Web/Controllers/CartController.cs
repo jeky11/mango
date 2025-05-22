@@ -1,4 +1,5 @@
 using Mango.Web.Models;
+using Mango.Web.Models.Extensions;
 using Mango.Web.Service.IService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -48,25 +49,30 @@ public class CartController : Controller
 		cart.CartHeader.LastName = cartDto.CartHeader.LastName;
 
 		var response = await _orderService.CreateOrderAsync(cart);
-		if (response?.Result == null || !response.IsSuccess)
+		if (!response.TryGetResult<OrderHeaderDto>(out var orderHeaderDto))
 		{
-			TempData["error"] = response?.Message;
+			TempData["error"] = response?.Message ?? "Invalid order";
 			return RedirectToAction(nameof(Index));
 		}
 
-		var responseStr = Convert.ToString(response.Result);
-		if (responseStr == null)
+		var scheme = HttpContext.Request.Scheme;
+		var host = HttpContext.Request.Host.Value;
+		var stripeRequestDto = new StripeRequestDto
 		{
+			ApprovedUrl = Url.Action("Confirmation", "Cart", new {orderId = orderHeaderDto.OrderHeaderId}, scheme, host),
+			CancelUrl = Url.Action("Checkout", "Cart", null, scheme, host),
+			OrderHeader = orderHeaderDto,
+		};
+
+		var stripeResponse = await _orderService.CreateStripeSessionAsync(stripeRequestDto);
+		if (!stripeResponse.TryGetResult<StripeRequestDto>(out var stripeResponseResult))
+		{
+			TempData["error"] = stripeResponse?.Message ?? "Invalid stripe response";
 			return RedirectToAction(nameof(Index));
 		}
 
-		var orderHeaderDto = JsonConvert.DeserializeObject<OrderHeaderDto>(responseStr);
-		if (orderHeaderDto == null)
-		{
-			return RedirectToAction(nameof(Index));
-		}
-
-		return RedirectToAction(nameof(Index));
+		Response.Headers.Append("Location", stripeResponseResult.StripeSessionUrl);
+		return new StatusCodeResult(303);
 	}
 
 	[HttpGet]

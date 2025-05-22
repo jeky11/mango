@@ -4,12 +4,16 @@ using Mango.Services.OrderAPI.Data;
 using Mango.Services.OrderAPI.Models;
 using Mango.Services.OrderAPI.Models.Dto;
 using Mango.Services.OrderAPI.Service.IService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Stripe.Checkout;
 
 namespace Mango.Services.OrderAPI.Controllers;
 
 [Route("api/order")]
 [ApiController]
+[Authorize]
 public class OrderApiController(
 	IMapper mapper,
 	AppDbContext db,
@@ -44,6 +48,64 @@ public class OrderApiController(
 			orderHeaderDto.OrderHeaderId = orderCreated.Entity.OrderHeaderId;
 
 			return new ResponseDto {Result = orderHeaderDto};
+		}
+		catch (Exception e)
+		{
+			return new ResponseDto
+			{
+				Message = e.Message,
+				IsSuccess = false,
+			};
+		}
+	}
+
+	[HttpPost("createStripeSession")]
+	public async Task<ResponseDto> CreateStripeSession([FromBody] StripeRequestDto stripeRequestDto)
+	{
+		try
+		{
+			if (stripeRequestDto.OrderHeader?.OrderDetails == null)
+			{
+				return new ResponseDto
+				{
+					Message = "Invalid cart",
+					IsSuccess = false,
+				};
+			}
+
+			var sessionCreateOptions = new SessionCreateOptions
+			{
+				SuccessUrl = stripeRequestDto.ApprovedUrl,
+				CancelUrl = stripeRequestDto.CancelUrl,
+				LineItems = [],
+				Mode = "payment",
+			};
+
+			foreach (var item in stripeRequestDto.OrderHeader.OrderDetails)
+			{
+				var sessionLineItem = new SessionLineItemOptions
+				{
+					PriceData = new SessionLineItemPriceDataOptions
+					{
+						UnitAmount = (long)(item.Price * 100), //20.99 -> 2099
+						Currency = "usd",
+						ProductData = new SessionLineItemPriceDataProductDataOptions {Name = item.Product!.Name}
+					},
+					Quantity = item.Count
+				};
+
+				sessionCreateOptions.LineItems.Add(sessionLineItem);
+			}
+
+			var service = new SessionService();
+			var session = await service.CreateAsync(sessionCreateOptions);
+			stripeRequestDto.StripeSessionUrl = session.Url;
+
+			var orderHeader = await _db.OrderHeaders.FirstAsync(x => x.OrderHeaderId == stripeRequestDto.OrderHeader.OrderHeaderId);
+			orderHeader.StripeSessionId = session.Id;
+			await _db.SaveChangesAsync();
+
+			return new ResponseDto {Result = stripeRequestDto};
 		}
 		catch (Exception e)
 		{
