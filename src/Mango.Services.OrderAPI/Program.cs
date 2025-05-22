@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 var serviceUrls = builder.Configuration.GetRequiredSection(nameof(ServiceUrls)).Get<ServiceUrls>() ?? throw new NullReferenceException();
 var jwtOptions = builder.Configuration.GetRequiredSection(nameof(JwtOptions)).Get<JwtOptions>() ?? new JwtOptions();
+builder.Services.Configure<StripeOptions>(builder.Configuration.GetRequiredSection(nameof(StripeOptions)));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
