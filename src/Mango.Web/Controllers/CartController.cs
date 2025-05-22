@@ -70,6 +70,12 @@ public class CartController : Controller
 	}
 
 	[HttpGet]
+	public IActionResult Confirmation(int orderId)
+	{
+		return View(orderId);
+	}
+
+	[HttpGet]
 	public async Task<IActionResult> Remove([FromQuery] int cartDetailsId)
 	{
 		var response = await _cartService.RemoveFromCartAsync(cartDetailsId);
