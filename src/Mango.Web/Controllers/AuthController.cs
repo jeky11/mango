@@ -1,12 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Mango.Web.Models;
+using Mango.Web.Models.Extensions;
 using Mango.Web.Service.IService;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Newtonsoft.Json;
 
 namespace Mango.Web.Controllers;
 
@@ -67,14 +67,13 @@ public class AuthController : Controller
 	public async Task<IActionResult> Login(LoginRequestDto request)
 	{
 		var loginResponse = await _authService.LoginAsync(request);
-		if (loginResponse is not {IsSuccess: true})
+		if (!loginResponse.TryGetResult<LoginResponseDto>(out var loginResult))
 		{
-			TempData["error"] = loginResponse?.Message;
+			TempData["error"] = loginResponse?.Message ?? "Invalid login";
 			return View(request);
 		}
 
-		var loginResult = JsonConvert.DeserializeObject<LoginResponseDto>(Convert.ToString(loginResponse.Result) ?? string.Empty);
-		if (string.IsNullOrEmpty(loginResult?.Token))
+		if (string.IsNullOrEmpty(loginResult.Token))
 		{
 			TempData["error"] = "Invalid username or password";
 			return View(request);

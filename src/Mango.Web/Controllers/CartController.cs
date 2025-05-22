@@ -4,7 +4,6 @@ using Mango.Web.Service.IService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
-using Newtonsoft.Json;
 
 namespace Mango.Web.Controllers;
 
@@ -162,18 +161,12 @@ public class CartController : Controller
 		}
 
 		var response = await _cartService.GetCartByUserIdAsync(userId);
-		if (response?.Result == null || !response.IsSuccess)
+		if (!response.TryGetResult<CartDto>(out var cartDto))
 		{
+			TempData["error"] = response?.Message ?? "Invalid cart";
 			return new CartDto();
 		}
 
-		var responseStr = Convert.ToString(response.Result);
-		if (responseStr == null)
-		{
-			return new CartDto();
-		}
-
-		var cartDto = JsonConvert.DeserializeObject<CartDto>(responseStr);
-		return cartDto ?? new CartDto();
+		return cartDto;
 	}
 }

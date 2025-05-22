@@ -1,7 +1,7 @@
 using Mango.Web.Models;
+using Mango.Web.Models.Extensions;
 using Mango.Web.Service.IService;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace Mango.Web.Controllers;
 
@@ -18,19 +18,12 @@ public class CouponController : Controller
 	public async Task<IActionResult> Index()
 	{
 		var response = await _couponService.GetAllCouponsAsync();
-		if (response?.Result == null || !response.IsSuccess)
+		if (!response.TryGetResult<List<CouponDto>>(out var coupons))
 		{
-			TempData["error"] = response?.Message;
+			TempData["error"] = response?.Message ?? "Invalid coupons";
 			return View(new List<CouponDto>());
 		}
 
-		var resultStr = Convert.ToString(response.Result);
-		if (resultStr == null)
-		{
-			return BadRequest();
-		}
-
-		var coupons = JsonConvert.DeserializeObject<List<CouponDto>>(resultStr);
 		return View(coupons);
 	}
 
@@ -63,19 +56,11 @@ public class CouponController : Controller
 	public async Task<IActionResult> Delete(int id)
 	{
 		var response = await _couponService.GetCouponAsync(id);
-		if (response?.Result == null || !response.IsSuccess)
+		if (!response.TryGetResult<CouponDto>(out var coupon))
 		{
-			TempData["error"] = response?.Message;
+			TempData["error"] = response?.Message ?? "Invalid coupon";
 			return RedirectToAction(nameof(Index));
 		}
-
-		var resultStr = Convert.ToString(response.Result);
-		if (resultStr == null)
-		{
-			return BadRequest();
-		}
-
-		var coupon = JsonConvert.DeserializeObject<CouponDto>(resultStr);
 
 		return View(coupon);
 	}
