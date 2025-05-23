@@ -75,8 +75,21 @@ public class CartController : Controller
 	}
 
 	[HttpGet]
-	public IActionResult Confirmation(int orderId)
+	public async Task<IActionResult> Confirmation(int orderId)
 	{
+		var response = await _orderService.ValidateStripeSessionAsync(orderId);
+		if (!response.TryGetResult<OrderHeaderDto>(out var orderHeaderDto))
+		{
+			TempData["error"] = response?.Message ?? "Invalid stripe session";
+			return RedirectToAction(nameof(Index));
+		}
+
+		if (orderHeaderDto.Status != Status.Approved)
+		{
+			TempData["error"] = "Invalid status";
+			return RedirectToAction(nameof(Index));
+		}
+
 		return View(orderId);
 	}
 

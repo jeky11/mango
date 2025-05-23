@@ -7,6 +7,7 @@ using Mango.Services.OrderAPI.Service.IService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 using Stripe.Checkout;
 
 namespace Mango.Services.OrderAPI.Controllers;
@@ -48,6 +49,41 @@ public class OrderApiController(
 			orderHeaderDto.OrderHeaderId = orderCreated.Entity.OrderHeaderId;
 
 			return new ResponseDto {Result = orderHeaderDto};
+		}
+		catch (Exception e)
+		{
+			return new ResponseDto
+			{
+				Message = e.Message,
+				IsSuccess = false,
+			};
+		}
+	}
+
+	[HttpPost("validateStripeSession")]
+	public async Task<ResponseDto> ValidateStripeSession([FromBody] int orderHeaderId)
+	{
+		try
+		{
+			var orderHeader = await _db.OrderHeaders.FirstAsync(x => x.OrderHeaderId == orderHeaderId);
+
+			var sessionService = new SessionService();
+			var session = await sessionService.GetAsync(orderHeader.StripeSessionId);
+
+			var paymentIntentService = new PaymentIntentService();
+			var paymentIntent = await paymentIntentService.GetAsync(session.PaymentIntentId);
+
+			if (paymentIntent.Status != "succeeded")
+			{
+				return new ResponseDto();
+			}
+
+			orderHeader.PaymentIntentId = paymentIntent.Id;
+			orderHeader.Status = Status.Approved;
+			await _db.SaveChangesAsync();
+
+			var result = _mapper.Map<OrderHeaderDto>(orderHeader);
+			return new ResponseDto {Result = result};
 		}
 		catch (Exception e)
 		{

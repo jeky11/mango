@@ -32,4 +32,16 @@ public class OrderService(IBaseService baseService, IOptions<ServiceUrls> servic
 			});
 		return responseDto;
 	}
+
+	public async Task<ResponseDto?> ValidateStripeSessionAsync(int orderHeaderId)
+	{
+		var responseDto = await _baseService.SendAsync(
+			new RequestDto
+			{
+				ApiType = HttpMethod.Post,
+				Url = new Uri(_baseUrl, "/api/order/validateStripeSession").ToString(),
+				Data = orderHeaderId
+			});
+		return responseDto;
+	}
 }
