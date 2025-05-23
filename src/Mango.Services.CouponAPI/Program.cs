@@ -1,13 +1,16 @@
 using Mango.Services.CouponAPI;
 using Mango.Services.CouponAPI.Data;
+using Mango.Services.CouponAPI.Models;
 using Mango.Services.Infrastructure.Extensions;
 using Mango.Services.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var jwtOptions = builder.Configuration.GetRequiredSection("JwtOptions").Get<JwtOptions>() ?? new JwtOptions();
+var stripeOptions = builder.Configuration.GetRequiredSection(nameof(StripeOptions)).Get<StripeOptions>() ?? throw new NullReferenceException();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -33,6 +36,8 @@ if (app.Environment.IsDevelopment())
 	app.UseSwagger();
 	app.UseSwaggerUI();
 }
+
+StripeConfiguration.ApiKey = stripeOptions.SecretKey;
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
