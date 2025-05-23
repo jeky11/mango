@@ -97,6 +97,12 @@ public class OrderApiController(
 				sessionCreateOptions.LineItems.Add(sessionLineItem);
 			}
 
+			if (stripeRequestDto.OrderHeader.Discount > 0)
+			{
+				var discountObj = new List<SessionDiscountOptions> {new() {Coupon = stripeRequestDto.OrderHeader.CouponCode}};
+				sessionCreateOptions.Discounts = discountObj;
+			}
+
 			var service = new SessionService();
 			var session = await service.CreateAsync(sessionCreateOptions);
 			stripeRequestDto.StripeSessionUrl = session.Url;
