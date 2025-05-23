@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run all" type="CompoundRunConfigurationType">
+    <toRun name="Mango.Servces.EmailAPI: https" type="LaunchSettings" />
+    <toRun name="Mango.Services.AuthAPI: https" type="LaunchSettings" />
+    <toRun name="Mango.Services.CouponAPI: https" type="LaunchSettings" />
+    <toRun name="Mango.Services.OrderAPI: https" type="LaunchSettings" />
+    <toRun name="Mango.Services.ProductAPI: https" type="LaunchSettings" />
+    <toRun name="Mango.Services.ShoppingCartAPI: https" type="LaunchSettings" />
+    <toRun name="Mango.Web: https" type="LaunchSettings" />
+    <method v="2" />
+  </configuration>
+</component>
