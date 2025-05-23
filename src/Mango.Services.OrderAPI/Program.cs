@@ -1,3 +1,4 @@
+using Mango.MessageBus;
 using Mango.Services.Infrastructure;
 using Mango.Services.Infrastructure.Extensions;
 using Mango.Services.Infrastructure.Models;
@@ -12,9 +13,11 @@ using ProductService = Mango.Services.OrderAPI.Service.ProductService;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+var messageBusConnection = builder.Configuration.GetConnectionString("MessageBusConnection") ?? throw new NullReferenceException();
 var serviceUrls = builder.Configuration.GetRequiredSection(nameof(ServiceUrls)).Get<ServiceUrls>() ?? throw new NullReferenceException();
 var jwtOptions = builder.Configuration.GetRequiredSection(nameof(JwtOptions)).Get<JwtOptions>() ?? new JwtOptions();
 var stripeOptions = builder.Configuration.GetRequiredSection(nameof(StripeOptions)).Get<StripeOptions>() ?? throw new NullReferenceException();
+builder.Services.Configure<TopicAndQueueNames>(builder.Configuration.GetRequiredSection(nameof(TopicAndQueueNames)));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -27,6 +30,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<BackendApiAuthenticationHttpClientHandler>();
+builder.Services.AddScoped<IMessageBus, MessageBus>(_ => new MessageBus(messageBusConnection));
 builder.Services.AddHttpClient("Product", client => client.BaseAddress = new Uri(serviceUrls.ProductApi))
 	.AddHttpMessageHandler<BackendApiAuthenticationHttpClientHandler>();
 
