@@ -1,4 +1,5 @@
 using AutoMapper;
+using Mango.MessageBus;
 using Mango.Services.Infrastructure.Models.Dto;
 using Mango.Services.OrderAPI.Data;
 using Mango.Services.OrderAPI.Models;
@@ -7,6 +8,7 @@ using Mango.Services.OrderAPI.Service.IService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Stripe;
 using Stripe.Checkout;
 
@@ -18,11 +20,15 @@ namespace Mango.Services.OrderAPI.Controllers;
 public class OrderApiController(
 	IMapper mapper,
 	AppDbContext db,
-	IProductService productService) : ControllerBase
+	IProductService productService,
+	IMessageBus messageBus,
+	IOptions<TopicAndQueueNames> topicAndQueueNames) : ControllerBase
 {
 	private readonly IMapper _mapper = mapper;
 	private readonly AppDbContext _db = db;
 	private readonly IProductService _productService = productService;
+	private readonly IMessageBus _messageBus = messageBus;
+	private readonly TopicAndQueueNames _topicAndQueueNames = topicAndQueueNames.Value;
 
 	[HttpPost("create")]
 	public async Task<ResponseDto> Create([FromBody] CartDto cartDto)
@@ -81,6 +87,15 @@ public class OrderApiController(
 			orderHeader.PaymentIntentId = paymentIntent.Id;
 			orderHeader.Status = Status.Approved;
 			await _db.SaveChangesAsync();
+
+			var rewardsDto = new RewardsDto
+			{
+				OrderId = orderHeader.OrderHeaderId,
+				RewardsActivity = Convert.ToInt32(orderHeader.OrderTotal),
+				UserId = orderHeader.UserId,
+			};
+
+			await _messageBus.PublishMessageAsync(rewardsDto, _topicAndQueueNames.OrderCreatedTopic);
 
 			var result = _mapper.Map<OrderHeaderDto>(orderHeader);
 			return new ResponseDto {Result = result};
