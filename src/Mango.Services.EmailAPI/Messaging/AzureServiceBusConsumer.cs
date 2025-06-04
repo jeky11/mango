@@ -1,5 +1,6 @@
 using System.Text;
 using Azure.Messaging.ServiceBus;
+using Mango.Services.EmailAPI.Message;
 using Mango.Services.EmailAPI.Models;
 using Mango.Services.EmailAPI.Models.Dto;
 using Mango.Services.EmailAPI.Services;
@@ -10,12 +11,9 @@ namespace Mango.Services.EmailAPI.Messaging;
 
 public class AzureServiceBusConsumer : IAzureServiceBusConsumer
 {
-	private readonly string _connectionString;
-	private readonly string _emailCartQueue;
-	private readonly string _registerUserQueue;
-
 	private readonly ServiceBusProcessor _emailCartProcessor;
 	private readonly ServiceBusProcessor _registerUserProcessor;
+	private readonly ServiceBusProcessor _emailOrderPlacedProcessor;
 
 	private readonly IServiceScopeFactory _scopeFactory;
 
@@ -24,14 +22,13 @@ public class AzureServiceBusConsumer : IAzureServiceBusConsumer
 		IOptions<TopicAndQueueNames> topicAndQueueNames,
 		IServiceScopeFactory scopeFactory)
 	{
-		_connectionString = connectionStrings.Value.MessageBusConnection;
-		_emailCartQueue = topicAndQueueNames.Value.EmailShoppingCartQueue;
-		_registerUserQueue = topicAndQueueNames.Value.RegisterUserQueue;
 		_scopeFactory = scopeFactory;
 
-		var client = new ServiceBusClient(_connectionString);
-		_emailCartProcessor = client.CreateProcessor(_emailCartQueue);
-		_registerUserProcessor = client.CreateProcessor(_registerUserQueue);
+		var client = new ServiceBusClient(connectionStrings.Value.MessageBusConnection);
+		_emailCartProcessor = client.CreateProcessor(topicAndQueueNames.Value.EmailShoppingCartQueue);
+		_registerUserProcessor = client.CreateProcessor(topicAndQueueNames.Value.RegisterUserQueue);
+		_emailOrderPlacedProcessor = client.CreateProcessor(
+			topicAndQueueNames.Value.OrderCreatedTopic, topicAndQueueNames.Value.OrderCreatedEmailSubscription);
 	}
 
 	public async Task StartAsync()
@@ -43,6 +40,10 @@ public class AzureServiceBusConsumer : IAzureServiceBusConsumer
 		_registerUserProcessor.ProcessMessageAsync += OnUserRegisterRequestReceived;
 		_registerUserProcessor.ProcessErrorAsync += ErrorHandler;
 		await _registerUserProcessor.StartProcessingAsync();
+
+		_emailOrderPlacedProcessor.ProcessMessageAsync += OnOrderPlacedRequestReceived;
+		_emailOrderPlacedProcessor.ProcessErrorAsync += ErrorHandler;
+		await _emailOrderPlacedProcessor.StartProcessingAsync();
 	}
 
 	public async Task StopAsync()
@@ -52,40 +53,32 @@ public class AzureServiceBusConsumer : IAzureServiceBusConsumer
 
 		await _registerUserProcessor.StopProcessingAsync();
 		await _registerUserProcessor.DisposeAsync();
+
+		await _emailOrderPlacedProcessor.StopProcessingAsync();
+		await _emailOrderPlacedProcessor.DisposeAsync();
 	}
 
-	private async Task OnEmailCartRequestReceived(ProcessMessageEventArgs arg)
+	private async Task OnEmailCartRequestReceived(ProcessMessageEventArgs arg) =>
+		await HandleMessageAsync<CartDto, IEmailService>(arg, (service, cart) => service.EmailCartAndLogAsync(cart));
+
+	private async Task OnUserRegisterRequestReceived(ProcessMessageEventArgs arg) =>
+		await HandleMessageAsync<string, IEmailService>(arg, (service, email) => service.RegisterUserEmailAndLogAsync(email));
+
+	private async Task OnOrderPlacedRequestReceived(ProcessMessageEventArgs arg) =>
+		await HandleMessageAsync<RewardsMessage, IEmailService>(arg, (service, rewardsMessage) => service.LogOrderPlacedAsync(rewardsMessage));
+
+	private async Task HandleMessageAsync<TMessage, TService>(ProcessMessageEventArgs arg, Func<TService, TMessage, Task> handler)
+		where TService : notnull
 	{
 		var message = arg.Message;
 		var body = Encoding.UTF8.GetString(message.Body);
 
-		var objMessage = JsonConvert.DeserializeObject<CartDto>(body) ?? throw new NullReferenceException();
+		var objMessage = JsonConvert.DeserializeObject<TMessage>(body) ?? throw new NullReferenceException();
 		try
 		{
 			await using var scope = _scopeFactory.CreateAsyncScope();
-			var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-			await emailService.EmailCartAndLogAsync(objMessage);
-
-			await arg.CompleteMessageAsync(arg.Message);
-		}
-		catch (Exception e)
-		{
-			Console.WriteLine(e);
-			throw;
-		}
-	}
-
-	private async Task OnUserRegisterRequestReceived(ProcessMessageEventArgs arg)
-	{
-		var message = arg.Message;
-		var body = Encoding.UTF8.GetString(message.Body);
-
-		var email = JsonConvert.DeserializeObject<string>(body) ?? throw new NullReferenceException();
-		try
-		{
-			await using var scope = _scopeFactory.CreateAsyncScope();
-			var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-			await emailService.RegisterUserEmailAndLogAsync(email);
+			var service = scope.ServiceProvider.GetRequiredService<TService>();
+			await handler(service, objMessage);
 
 			await arg.CompleteMessageAsync(arg.Message);
 		}

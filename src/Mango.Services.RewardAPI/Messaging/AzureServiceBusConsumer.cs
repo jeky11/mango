@@ -10,10 +10,6 @@ namespace Mango.Services.RewardAPI.Messaging;
 
 public class AzureServiceBusConsumer : IAzureServiceBusConsumer
 {
-	private readonly string _connectionString;
-	private readonly string _orderCreatedTopic;
-	private readonly string _orderCreatedRewardSubscription;
-
 	private readonly ServiceBusProcessor _rewardProcessor;
 
 	private readonly IServiceScopeFactory _scopeFactory;
@@ -23,13 +19,11 @@ public class AzureServiceBusConsumer : IAzureServiceBusConsumer
 		IOptions<TopicAndQueueNames> topicAndQueueNames,
 		IServiceScopeFactory scopeFactory)
 	{
-		_connectionString = connectionStrings.Value.MessageBusConnection;
-		_orderCreatedTopic = topicAndQueueNames.Value.OrderCreatedTopic;
-		_orderCreatedRewardSubscription = topicAndQueueNames.Value.OrderCreatedRewardsSubscription;
 		_scopeFactory = scopeFactory;
 
-		var client = new ServiceBusClient(_connectionString);
-		_rewardProcessor = client.CreateProcessor(_orderCreatedTopic, _orderCreatedRewardSubscription);
+		var client = new ServiceBusClient(connectionStrings.Value.MessageBusConnection);
+		_rewardProcessor = client.CreateProcessor(
+			topicAndQueueNames.Value.OrderCreatedTopic, topicAndQueueNames.Value.OrderCreatedRewardsSubscription);
 	}
 
 	public async Task StartAsync()
@@ -45,17 +39,21 @@ public class AzureServiceBusConsumer : IAzureServiceBusConsumer
 		await _rewardProcessor.DisposeAsync();
 	}
 
-	private async Task OnNewOrderRewardsRequestReceived(ProcessMessageEventArgs arg)
+	private async Task OnNewOrderRewardsRequestReceived(ProcessMessageEventArgs arg) =>
+		await HandleMessageAsync<RewardsMessage, IRewardService>(arg, (service, rewardsMessage) => service.UpdateRewardsAsync(rewardsMessage));
+
+	private async Task HandleMessageAsync<TMessage, TService>(ProcessMessageEventArgs arg, Func<TService, TMessage, Task> handler)
+		where TService : notnull
 	{
 		var message = arg.Message;
 		var body = Encoding.UTF8.GetString(message.Body);
 
-		var objMessage = JsonConvert.DeserializeObject<RewardsMessage>(body) ?? throw new NullReferenceException();
+		var objMessage = JsonConvert.DeserializeObject<TMessage>(body) ?? throw new NullReferenceException();
 		try
 		{
 			await using var scope = _scopeFactory.CreateAsyncScope();
-			var rewardService = scope.ServiceProvider.GetRequiredService<IRewardService>();
-			await rewardService.UpdateRewardsAsync(objMessage);
+			var service = scope.ServiceProvider.GetRequiredService<TService>();
+			await handler(service, objMessage);
 
 			await arg.CompleteMessageAsync(arg.Message);
 		}
