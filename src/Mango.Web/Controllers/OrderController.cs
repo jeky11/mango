@@ -19,7 +19,7 @@ public class OrderController(IOrderService orderService) : Controller
 	[HttpGet]
 	public async Task<IActionResult> GetAll()
 	{
-		var userId = User.IsInRole(nameof(Role.Admin))
+		var userId = User.IsInRole(nameof(Role.ADMIN))
 			? string.Empty
 			: User.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Sub)?.Value;
 
