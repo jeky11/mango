@@ -29,6 +29,51 @@ public class OrderApiController(
 	private readonly IProductService _productService = productService;
 	private readonly IMessageBus _messageBus = messageBus;
 	private readonly TopicAndQueueNames _topicAndQueueNames = topicAndQueueNames.Value;
+	
+	[HttpGet("getOrders")]
+	public async Task<ResponseDto> GetOrders(string? userId = "")
+	{
+		try
+		{
+			var ordersQuery = _db.OrderHeaders.Include(x => x.OrderDetails).AsQueryable();
+
+			if (!User.IsInRole(nameof(Role.ADMIN)))
+			{
+				ordersQuery = ordersQuery.Where(x => x.UserId == userId);
+			}
+
+			ordersQuery = ordersQuery.OrderByDescending(x => x.OrderHeaderId);
+			var orders = await ordersQuery.ToListAsync();
+
+			return new ResponseDto {Result = _mapper.Map<List<OrderHeaderDto>>(orders)};
+		}
+		catch (Exception e)
+		{
+			return new ResponseDto
+			{
+				Message = e.Message,
+				IsSuccess = false,
+			};
+		}
+	}
+
+	[HttpGet("getOrder/{id:int}")]
+	public async Task<ResponseDto> GetOrder(int id)
+	{
+		try
+		{
+			var orderHeader = await _db.OrderHeaders.Include(x => x.OrderDetails).FirstAsync(x => x.OrderHeaderId == id);
+			return new ResponseDto {Result = _mapper.Map<OrderHeaderDto>(orderHeader)};
+		}
+		catch (Exception e)
+		{
+			return new ResponseDto
+			{
+				Message = e.Message,
+				IsSuccess = false,
+			};
+		}
+	}
 
 	[HttpPost("create")]
 	public async Task<ResponseDto> Create([FromBody] CartDto cartDto)
@@ -163,6 +208,48 @@ public class OrderApiController(
 			await _db.SaveChangesAsync();
 
 			return new ResponseDto {Result = stripeRequestDto};
+		}
+		catch (Exception e)
+		{
+			return new ResponseDto
+			{
+				Message = e.Message,
+				IsSuccess = false,
+			};
+		}
+	}
+
+	[HttpPost("updateOrderStatus/{orderId:int}")]
+	public async Task<ResponseDto> UpdateOrderStatus(int orderId, [FromBody] Status newStatus)
+	{
+		try
+		{
+			var orderHeader = await _db.OrderHeaders.FirstOrDefaultAsync(x => x.OrderHeaderId == orderId);
+			if (orderHeader == null)
+			{
+				return new ResponseDto
+				{
+					Message = "Order not found",
+					IsSuccess = false,
+				};
+			}
+
+			if (newStatus == Status.Cancelled)
+			{
+				var options = new RefundCreateOptions
+				{
+					Reason = RefundReasons.RequestedByCustomer,
+					PaymentIntent = orderHeader.PaymentIntentId
+				};
+
+				var refundService = new RefundService();
+				await refundService.CreateAsync(options);
+			}
+
+			orderHeader.Status = newStatus;
+			await _db.SaveChangesAsync();
+
+			return new ResponseDto();
 		}
 		catch (Exception e)
 		{

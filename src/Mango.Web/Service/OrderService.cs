@@ -44,4 +44,38 @@ public class OrderService(IBaseService baseService, IOptions<ServiceUrls> servic
 			});
 		return responseDto;
 	}
+
+	public async Task<ResponseDto?> GetAllOrdersAsync(string? userId)
+	{
+		var responseDto = await _baseService.SendAsync(
+			new RequestDto
+			{
+				ApiType = HttpMethod.Get,
+				Url = new Uri(_baseUrl, $"/api/order/getOrders?userId={userId}").ToString(),
+			});
+		return responseDto;
+	}
+
+	public async Task<ResponseDto?> GetOrderAsync(int orderId)
+	{
+		var responseDto = await _baseService.SendAsync(
+			new RequestDto
+			{
+				ApiType = HttpMethod.Get,
+				Url = new Uri(_baseUrl, $"/api/order/getOrder/{orderId}").ToString(),
+			});
+		return responseDto;
+	}
+
+	public async Task<ResponseDto?> UpdateOrderStatusAsync(int orderId, Status newStatus)
+	{
+		var responseDto = await _baseService.SendAsync(
+			new RequestDto
+			{
+				ApiType = HttpMethod.Post,
+				Url = new Uri(_baseUrl, $"/api/order/updateOrderStatus/{orderId}").ToString(),
+				Data = newStatus
+			});
+		return responseDto;
+	}
 }
