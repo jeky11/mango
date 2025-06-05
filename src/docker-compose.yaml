@@ -1,0 +1,21 @@
+﻿services:
+  mssql:
+    container_name: mssql
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=aA!123456
+    volumes:
+      - mssql_write_data:/var/opt/mssql
+    networks:
+      - mssql-write-network
+    restart: unless-stopped
+
+volumes:
+  mssql_write_data:
+
+networks:
+  mssql-write-network:
+    driver: bridge
