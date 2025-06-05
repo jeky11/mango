@@ -17,6 +17,27 @@ public class OrderController(IOrderService orderService) : Controller
 	}
 
 	[HttpGet]
+	public async Task<IActionResult> OrderDetail(int orderId)
+	{
+		var userId = User.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Sub)?.Value;
+
+		var response = await _orderService.GetOrderAsync(orderId);
+		if (!response.TryGetResult<OrderHeaderDto>(out var order))
+		{
+			TempData["error"] = response?.Message ?? "Order not found";
+			return RedirectToAction(nameof(Index));
+		}
+
+		if (!User.IsInRole(nameof(Role.ADMIN)) && userId != order.UserId)
+		{
+			TempData["error"] = "Order not found";
+			return RedirectToAction(nameof(Index));
+		}
+
+		return View(order);
+	}
+
+	[HttpGet]
 	public async Task<IActionResult> GetAll()
 	{
 		var userId = User.IsInRole(nameof(Role.ADMIN))
@@ -30,5 +51,20 @@ public class OrderController(IOrderService orderService) : Controller
 		}
 
 		return Json(new {data = orders});
+	}
+
+	public IActionResult OrderReadyForPickup()
+	{
+		throw new NotImplementedException();
+	}
+
+	public IActionResult CompleteOrder()
+	{
+		throw new NotImplementedException();
+	}
+
+	public IActionResult CancelOrder()
+	{
+		throw new NotImplementedException();
 	}
 }
