@@ -35,3 +35,6 @@ _ReSharper*/
 
 # Data from docker
 docker/*/data/
+
+# Images
+ProductImages/
