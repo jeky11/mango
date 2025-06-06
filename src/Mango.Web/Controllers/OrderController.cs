@@ -53,18 +53,51 @@ public class OrderController(IOrderService orderService) : Controller
 		return Json(new {data = orders});
 	}
 
-	public IActionResult OrderReadyForPickup()
+	[HttpPost("orderReadyForPickup")]
+	public async Task<IActionResult> OrderReadyForPickup(int orderId)
 	{
-		throw new NotImplementedException();
+		var response = await _orderService.UpdateOrderStatusAsync(orderId, Status.ReadyForPickup);
+		if (response is not {IsSuccess: true})
+		{
+			TempData["error"] = response?.Message ?? "Cannot update order status";
+		}
+		else
+		{
+			TempData["success"] = "Status successfully updated";
+		}
+
+		return RedirectToAction(nameof(OrderDetail), new {orderId});
 	}
 
-	public IActionResult CompleteOrder()
+	[HttpPost("completeOrder")]
+	public async Task<IActionResult> CompleteOrder(int orderId)
 	{
-		throw new NotImplementedException();
+		var response = await _orderService.UpdateOrderStatusAsync(orderId, Status.Completed);
+		if (response is not {IsSuccess: true})
+		{
+			TempData["error"] = response?.Message ?? "Cannot update order status";
+		}
+		else
+		{
+			TempData["success"] = "Status successfully updated";
+		}
+
+		return RedirectToAction(nameof(OrderDetail), new {orderId});
 	}
 
-	public IActionResult CancelOrder()
+	[HttpPost("cancelOrder")]
+	public async Task<IActionResult> CancelOrder(int orderId)
 	{
-		throw new NotImplementedException();
+		var response = await _orderService.UpdateOrderStatusAsync(orderId, Status.Cancelled);
+		if (response is not {IsSuccess: true})
+		{
+			TempData["error"] = response?.Message ?? "Cannot update order status";
+		}
+		else
+		{
+			TempData["success"] = "Status successfully updated";
+		}
+
+		return RedirectToAction(nameof(OrderDetail), new {orderId});
 	}
 }

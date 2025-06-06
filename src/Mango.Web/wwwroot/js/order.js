@@ -6,6 +6,7 @@ $(document).ready(function () {
 
 function loadDataTable() {
 	$('#tblData').DataTable({
+		order: [[0, 'desc']],
 		ajax: {url: "/order/getAll"},
 		columns: [
 			{data: 'orderHeaderId', "width": "5%"},
