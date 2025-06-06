@@ -5,16 +5,10 @@ using Newtonsoft.Json;
 
 namespace Mango.Web.Service;
 
-public class BaseService : IBaseService
+public class BaseService(IHttpClientFactory httpClientFactory, ITokenProvider tokenProvider) : IBaseService
 {
-	private readonly IHttpClientFactory _httpClientFactory;
-	private readonly ITokenProvider _tokenProvider;
-
-	public BaseService(IHttpClientFactory httpClientFactory, ITokenProvider tokenProvider)
-	{
-		_httpClientFactory = httpClientFactory;
-		_tokenProvider = tokenProvider;
-	}
+	private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+	private readonly ITokenProvider _tokenProvider = tokenProvider;
 
 	public async Task<ResponseDto?> SendAsync(RequestDto requestDto, bool withBearer = true)
 	{
@@ -34,27 +28,7 @@ public class BaseService : IBaseService
 
 			message.RequestUri = new Uri(requestDto.Url);
 
-			if (requestDto.Data != null)
-			{
-				if (requestDto.MediaType != MangoMediaType.MultipartFormData)
-				{
-					var serializedObject = JsonConvert.SerializeObject(requestDto.Data);
-					message.Content = new StringContent(serializedObject, Encoding.UTF8, MangoMediaType.ApplicationJson.Value);
-				}
-				else
-				{
-					var content = new MultipartFormDataContent();
-
-					foreach (var prop in requestDto.Data.GetType().GetProperties())
-					{
-						var value = prop.GetValue(requestDto.Data);
-						if (value is FormFile file)
-						{
-							content.Add(new StreamContent(file.OpenReadStream()), prop.Name, file.FileName);
-						}
-					}
-				}
-			}
+			message.Content = GetContent(requestDto);
 
 			message.Method = requestDto.ApiType;
 
@@ -81,5 +55,36 @@ public class BaseService : IBaseService
 				Message = e.Message
 			};
 		}
+	}
+
+	private static HttpContent? GetContent(RequestDto requestDto)
+	{
+		if (requestDto.Data == null)
+		{
+			return null;
+		}
+
+		if (requestDto.MediaType != MangoMediaType.MultipartFormData)
+		{
+			var serializedObject = JsonConvert.SerializeObject(requestDto.Data);
+			return new StringContent(serializedObject, Encoding.UTF8, MangoMediaType.ApplicationJson.Value);
+		}
+
+		var multipartContent = new MultipartFormDataContent();
+
+		foreach (var prop in requestDto.Data.GetType().GetProperties())
+		{
+			var value = prop.GetValue(requestDto.Data);
+			if (value is FormFile file)
+			{
+				multipartContent.Add(new StreamContent(file.OpenReadStream()), prop.Name, file.FileName);
+			}
+			else
+			{
+				multipartContent.Add(new StringContent(value?.ToString() ?? string.Empty), prop.Name);
+			}
+		}
+
+		return multipartContent;
 	}
 }

@@ -60,13 +60,32 @@ public class ProductApiController : ControllerBase
 
 	[HttpPost]
 	[Authorize(Roles = nameof(Role.ADMIN))]
-	public ResponseDto Post([FromBody] ProductDto productDto)
+	public ResponseDto Post(ProductDto productDto)
 	{
 		try
 		{
 			var product = _mapper.Map<Product>(productDto);
+			product.ImageUrl = "https://placehold.co/600x400";
 			_db.Products.Add(product);
 			_db.SaveChanges();
+			var productId = product.ProductId;
+
+			if (productDto.Image != null)
+			{
+				var fileName = productId + Path.GetExtension(productDto.Image.FileName);
+				var filePath = @"wwwroot\ProductImages\" + fileName;
+				var filePathDirectory = Path.Combine(Directory.GetCurrentDirectory(), filePath);
+				using (var fileStream = new FileStream(filePathDirectory, FileMode.Create))
+				{
+					productDto.Image.CopyTo(fileStream);
+				}
+
+				var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.PathBase.Value}";
+				product.ImageUrl = baseUrl + "/ProductImages/" + fileName;
+				product.ImageLocalPath = filePath;
+				_db.Products.Update(product);
+				_db.SaveChanges();
+			}
 
 			_responseDto.Result = _mapper.Map<ProductDto>(product);
 		}

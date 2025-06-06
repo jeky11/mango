@@ -1,6 +1,6 @@
 @model ProductDto
 
-<form asp-action="Create">
+<form asp-action="Create" enctype="multipart/form-data">
 	<br/>
 	<div class="container border p-3">
 		<h1 class="text-white text-center">Create Product</h1>
@@ -31,7 +31,8 @@
 				<label class="control-label pt-2" style="font-size:20px;">ImageUrl</label>
 			</div>
 			<div class="col-10 pb-3">
-				<input asp-for="ImageUrl" class="form-control"/>
+				<input asp-for="Image" class="form-control"/>
+				<input asp-for="ImageUrl" hidden class="form-control"/>
 				<span asp-validation-for="ImageUrl" class="text-danger"></span>
 			</div>
 			<div class="col-2">
