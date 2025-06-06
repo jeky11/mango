@@ -127,6 +127,16 @@ public class ProductApiController : ControllerBase
 		try
 		{
 			var product = _db.Products.First(x => x.ProductId == id);
+			if (!string.IsNullOrEmpty(product.ImageLocalPath))
+			{
+				var oldFilePathDirectory = Path.Combine(Directory.GetCurrentDirectory(), product.ImageLocalPath);
+				var file = new FileInfo(oldFilePathDirectory);
+				if (file.Exists)
+				{
+					file.Delete();
+				}
+			}
+
 			_db.Products.Remove(product);
 			_db.SaveChanges();
 		}
