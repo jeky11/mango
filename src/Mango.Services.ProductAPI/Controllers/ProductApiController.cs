@@ -68,20 +68,12 @@ public class ProductApiController : ControllerBase
 			product.ImageUrl = "https://placehold.co/600x400";
 			_db.Products.Add(product);
 			_db.SaveChanges();
-			var productId = product.ProductId;
 
 			if (productDto.Image != null)
 			{
-				var fileName = productId + Path.GetExtension(productDto.Image.FileName);
-				var filePath = @"wwwroot\ProductImages\" + fileName;
-				var filePathDirectory = Path.Combine(Directory.GetCurrentDirectory(), filePath);
-				using (var fileStream = new FileStream(filePathDirectory, FileMode.Create))
-				{
-					productDto.Image.CopyTo(fileStream);
-				}
+				var (imageUrl, filePath) = SaveImage(product.ProductId, productDto.Image);
 
-				var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.PathBase.Value}";
-				product.ImageUrl = baseUrl + "/ProductImages/" + fileName;
+				product.ImageUrl = imageUrl;
 				product.ImageLocalPath = filePath;
 				_db.Products.Update(product);
 				_db.SaveChanges();
@@ -100,11 +92,21 @@ public class ProductApiController : ControllerBase
 
 	[HttpPut]
 	[Authorize(Roles = nameof(Role.ADMIN))]
-	public ResponseDto Put([FromBody] ProductDto productDto)
+	public ResponseDto Put(ProductDto productDto)
 	{
 		try
 		{
 			var product = _mapper.Map<Product>(productDto);
+
+			if (productDto.Image != null)
+			{
+				DeleteImage(product);
+				var (imageUrl, filePath) = SaveImage(productDto.ProductId, productDto.Image);
+
+				product.ImageUrl = imageUrl;
+				product.ImageLocalPath = filePath;
+			}
+
 			_db.Products.Update(product);
 			_db.SaveChanges();
 
@@ -127,15 +129,8 @@ public class ProductApiController : ControllerBase
 		try
 		{
 			var product = _db.Products.First(x => x.ProductId == id);
-			if (!string.IsNullOrEmpty(product.ImageLocalPath))
-			{
-				var oldFilePathDirectory = Path.Combine(Directory.GetCurrentDirectory(), product.ImageLocalPath);
-				var file = new FileInfo(oldFilePathDirectory);
-				if (file.Exists)
-				{
-					file.Delete();
-				}
-			}
+
+			DeleteImage(product);
 
 			_db.Products.Remove(product);
 			_db.SaveChanges();
@@ -147,5 +142,35 @@ public class ProductApiController : ControllerBase
 		}
 
 		return _responseDto;
+	}
+
+	private (string imageUrl, string filePath) SaveImage(int productId, IFormFile image)
+	{
+		var fileName = productId + Path.GetExtension(image.FileName);
+		var filePath = @"wwwroot\ProductImages\" + fileName;
+		var filePathDirectory = Path.Combine(Directory.GetCurrentDirectory(), filePath);
+		using (var fileStream = new FileStream(filePathDirectory, FileMode.Create))
+		{
+			image.CopyTo(fileStream);
+		}
+
+		var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.PathBase.Value}";
+		var imageUrl = baseUrl + "/ProductImages/" + fileName;
+		return (imageUrl, filePath);
+	}
+
+	private static void DeleteImage(Product product)
+	{
+		if (string.IsNullOrEmpty(product.ImageLocalPath))
+		{
+			return;
+		}
+
+		var oldFilePathDirectory = Path.Combine(Directory.GetCurrentDirectory(), product.ImageLocalPath);
+		var file = new FileInfo(oldFilePathDirectory);
+		if (file.Exists)
+		{
+			file.Delete();
+		}
 	}
 }
