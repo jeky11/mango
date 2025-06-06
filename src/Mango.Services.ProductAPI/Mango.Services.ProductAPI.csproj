@@ -23,4 +23,8 @@
       <ProjectReference Include="..\Mango.Services.Infrastructure\Mango.Services.Infrastructure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\" />
+    </ItemGroup>
+
 </Project>
