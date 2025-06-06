@@ -38,7 +38,7 @@ public class OrderController(IOrderService orderService) : Controller
 	}
 
 	[HttpGet]
-	public async Task<IActionResult> GetAll()
+	public async Task<IActionResult> GetAll(string status)
 	{
 		var userId = User.IsInRole(nameof(Role.ADMIN))
 			? string.Empty
@@ -49,6 +49,14 @@ public class OrderController(IOrderService orderService) : Controller
 		{
 			orders = [];
 		}
+
+		orders = status switch
+		{
+			"approved" => orders.Where(x => x.Status == Status.Approved).ToList(),
+			"readyforpickup" => orders.Where(x => x.Status == Status.ReadyForPickup).ToList(),
+			"cancelled" => orders.Where(x => x.Status is Status.Cancelled or Status.Refunded).ToList(),
+			_ => orders
+		};
 
 		return Json(new {data = orders});
 	}

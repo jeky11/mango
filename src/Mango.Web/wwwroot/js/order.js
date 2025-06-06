@@ -1,13 +1,15 @@
 let dataTable;
 
 $(document).ready(function () {
-	loadDataTable();
+	const urlParams = new URLSearchParams(window.location.search);
+	const status = urlParams.get('status');
+	loadDataTable(status);
 })
 
-function loadDataTable() {
+function loadDataTable(status) {
 	$('#tblData').DataTable({
 		order: [[0, 'desc']],
-		ajax: {url: "/order/getAll"},
+		ajax: {url: "/order/getAll?status=" + status},
 		columns: [
 			{data: 'orderHeaderId', "width": "5%"},
 			{data: 'email', "width": "25%"},
