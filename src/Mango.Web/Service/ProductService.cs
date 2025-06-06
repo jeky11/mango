@@ -44,7 +44,8 @@ public class ProductService : IProductService
 			{
 				ApiType = HttpMethod.Post,
 				Url = new Uri(_baseUrl, "/api/product").ToString(),
-				Data = product
+				Data = product,
+				MediaType = MangoMediaType.MultipartFormData
 			});
 		return responseDto;
 	}
@@ -56,7 +57,8 @@ public class ProductService : IProductService
 			{
 				ApiType = HttpMethod.Put,
 				Url = new Uri(_baseUrl, "/api/product").ToString(),
-				Data = product
+				Data = product,
+				MediaType = MangoMediaType.MultipartFormData
 			});
 		return responseDto;
 	}

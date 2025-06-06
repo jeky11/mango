@@ -22,7 +22,9 @@ public class BaseService : IBaseService
 		{
 			var client = _httpClientFactory.CreateClient("MangoApi");
 			var message = new HttpRequestMessage();
-			message.Headers.Add("Accept", "application/json");
+
+			var acceptValue = requestDto.MediaType == MangoMediaType.MultipartFormData ? "*/*" : MangoMediaType.ApplicationJson.Value;
+			message.Headers.Add("Accept", acceptValue);
 
 			if (withBearer)
 			{
@@ -31,9 +33,27 @@ public class BaseService : IBaseService
 			}
 
 			message.RequestUri = new Uri(requestDto.Url);
+
 			if (requestDto.Data != null)
 			{
-				message.Content = new StringContent(JsonConvert.SerializeObject(requestDto.Data), Encoding.UTF8, "application/json");
+				if (requestDto.MediaType != MangoMediaType.MultipartFormData)
+				{
+					var serializedObject = JsonConvert.SerializeObject(requestDto.Data);
+					message.Content = new StringContent(serializedObject, Encoding.UTF8, MangoMediaType.ApplicationJson.Value);
+				}
+				else
+				{
+					var content = new MultipartFormDataContent();
+
+					foreach (var prop in requestDto.Data.GetType().GetProperties())
+					{
+						var value = prop.GetValue(requestDto.Data);
+						if (value is FormFile file)
+						{
+							content.Add(new StreamContent(file.OpenReadStream()), prop.Name, file.FileName);
+						}
+					}
+				}
 			}
 
 			message.Method = requestDto.ApiType;
