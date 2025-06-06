@@ -68,6 +68,11 @@ public class ProductController : Controller
 	[HttpPost]
 	public async Task<IActionResult> Edit(ProductDto product)
 	{
+		if (!ModelState.IsValid)
+		{
+			return View(product);
+		}
+
 		var response = await _productService.UpdateProductAsync(product);
 		if (response is not {IsSuccess: true})
 		{
