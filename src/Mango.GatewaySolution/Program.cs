@@ -5,7 +5,9 @@ using Ocelot.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 var jwtOptions = builder.Configuration.GetRequiredSection(nameof(JwtOptions)).Get<JwtOptions>() ?? new JwtOptions();
-builder.Configuration.AddJsonFile("ocelot.json", false, true);
+
+var ocelotFile = builder.Environment.EnvironmentName.ToLower().Equals("production") ? "ocelot.Production.json" : "ocelot.json";
+builder.Configuration.AddJsonFile(ocelotFile, false, true);
 
 builder.Services.AddAppAuthentication(jwtOptions);
 builder.Services.AddOcelot(builder.Configuration);
