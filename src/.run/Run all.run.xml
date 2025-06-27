@@ -1,6 +1,5 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run all" type="CompoundRunConfigurationType">
-    <toRun name="Mango.GatewaySolution: https" type="LaunchSettings" />
     <toRun name="Mango.Servces.EmailAPI: https" type="LaunchSettings" />
     <toRun name="Mango.Services.AuthAPI: https" type="LaunchSettings" />
     <toRun name="Mango.Services.CouponAPI: https" type="LaunchSettings" />
