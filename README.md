@@ -14,4 +14,4 @@ Learn Microservices architecture with .NET Core MVC(.NET 8), Entity Framework Co
 - ASPNET Core Web Application with Bootstrap 5
 - Entity Framework Core with SQL Server Database
 
-https://skuvault.udemy.com/course/net-core-microservices-the-complete-guide-net-6-mvc
+https://www.udemy.com/course/net-core-microservices-the-complete-guide-net-6-mvc
