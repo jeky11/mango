@@ -8,16 +8,16 @@ public class RabbitMqAuthSender(string connectionString) : IRabbitMqAuthSender
 {
 	private readonly Uri _connectionString = new(connectionString);
 
-	public async Task PublishMessageAsync(object message, string queueName)
+	public async Task PublishMessageAsync(object message, string queueName, CancellationToken cancellationToken = default)
 	{
 		var factory = new ConnectionFactory {Uri = _connectionString};
 
-		var connection = await factory.CreateConnectionAsync();
+		var connection = await factory.CreateConnectionAsync(cancellationToken);
 
-		await using var channel = await connection.CreateChannelAsync();
-		await channel.QueueDeclareAsync(queueName);
+		await using var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+		await channel.QueueDeclareAsync(queueName, false, false, false, cancellationToken: cancellationToken);
 		var jsonMessage = JsonConvert.SerializeObject(message);
 		var body = Encoding.UTF8.GetBytes(jsonMessage);
-		await channel.BasicPublishAsync("", queueName, body);
+		await channel.BasicPublishAsync("", queueName, body, cancellationToken);
 	}
 }

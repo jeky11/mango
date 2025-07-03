@@ -2,5 +2,5 @@ namespace Mango.Services.AuthAPI.RabbitMQSender;
 
 public interface IRabbitMqAuthSender
 {
-	Task PublishMessageAsync(object message, string queueName);
+	Task PublishMessageAsync(object message, string queueName, CancellationToken cancellationToken = default);
 }
