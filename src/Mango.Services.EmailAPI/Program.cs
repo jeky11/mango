@@ -19,6 +19,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddSingleton<IAzureServiceBusConsumer, AzureServiceBusConsumer>();
 builder.Services.AddHostedService<AzureServiceBusHostedService>();
+builder.Services.AddSingleton<IRabbitMqConsumer, RabbitMqConsumer>();
+builder.Services.AddHostedService<RabbitMqHostedService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
