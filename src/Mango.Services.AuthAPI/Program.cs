@@ -1,7 +1,7 @@
 using Mango.MessageBus;
+using Mango.MessageBus.MessageBusSender;
 using Mango.Services.AuthAPI.Data;
 using Mango.Services.AuthAPI.Models;
-using Mango.Services.AuthAPI.RabbitMQSender;
 using Mango.Services.AuthAPI.Service;
 using Mango.Services.AuthAPI.Service.IService;
 using Mango.Services.Infrastructure.Extensions;
@@ -11,8 +11,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var messageBusConnection = builder.Configuration.GetConnectionString("MessageBusConnection") ?? throw new NullReferenceException();
-var rabbitMqConnection = builder.Configuration.GetConnectionString("RabbitMQConnection") ?? throw new NullReferenceException();
+builder.Services.Configure<MessageBusConnectionStrings>(builder.Configuration.GetRequiredSection("ConnectionStrings"));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetRequiredSection("ApiSettings:JwtOptions"));
 builder.Services.Configure<TopicAndQueueNames>(builder.Configuration.GetRequiredSection(nameof(TopicAndQueueNames)));
 
@@ -25,8 +24,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 	.AddDefaultTokenProviders();
 
 builder.Services.AddControllers();
-builder.Services.AddScoped<IMessageBus, MessageBus>(_ => new MessageBus(messageBusConnection));
-builder.Services.AddSingleton<IRabbitMqAuthSender, RabbitMqAuthSender>(_ => new RabbitMqAuthSender(rabbitMqConnection));
+builder.Services.AddScoped<IMessageBusSenderFactory, MessageBusSenderFactory>();
+builder.Services.AddSingleton<IMessageBusSender>(sp => sp.GetRequiredService<IMessageBusSenderFactory>().CreateMessageBusSender());
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 

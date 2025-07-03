@@ -3,20 +3,20 @@ using System.Text;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 
-namespace Mango.Services.AuthAPI.RabbitMQSender;
+namespace Mango.MessageBus.MessageBusSender;
 
-public class RabbitMqAuthSender : IRabbitMqAuthSender, IAsyncDisposable
+internal class RabbitMQMessageBusSender : IMessageBusSender, IAsyncDisposable
 {
 	private readonly IConnection _connection;
 	private readonly ConcurrentDictionary<string, IChannel> _channels = new();
 
-	public RabbitMqAuthSender(string connectionString)
+	public RabbitMQMessageBusSender(string connectionString)
 	{
 		var factory = new ConnectionFactory {Uri = new Uri(connectionString)};
 		_connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
 	}
 
-	public async Task PublishMessageAsync(object message, string queueName, CancellationToken cancellationToken = default)
+	public async Task PublishMessageToQueueAsync(object message, string queueName, CancellationToken cancellationToken = default)
 	{
 		var channel = _channels.GetOrAdd(
 			queueName, qn =>
@@ -31,13 +31,31 @@ public class RabbitMqAuthSender : IRabbitMqAuthSender, IAsyncDisposable
 		await channel.BasicPublishAsync("", queueName, body, cancellationToken);
 	}
 
+	public async Task PublishMessageToTopicAsync(object message, string topicName, CancellationToken cancellationToken = default)
+	{
+		var channel = _channels.GetOrAdd(
+			topicName, exchangeName =>
+			{
+				var ch = _connection.CreateChannelAsync(cancellationToken: cancellationToken).GetAwaiter().GetResult();
+				ch.ExchangeDeclareAsync(exchangeName, ExchangeType.Fanout, false, false, cancellationToken: cancellationToken)
+					.GetAwaiter()
+					.GetResult();
+				return ch;
+			});
+
+		var jsonMessage = JsonConvert.SerializeObject(message);
+		var body = Encoding.UTF8.GetBytes(jsonMessage);
+		await channel.BasicPublishAsync(topicName, "", body, cancellationToken);
+	}
+
 	public async ValueTask DisposeAsync()
 	{
 		foreach (var channel in _channels)
 		{
 			await channel.Value.DisposeAsync();
-			_channels.TryRemove(channel);
 		}
+
+		_channels.Clear();
 
 		await _connection.DisposeAsync();
 
