@@ -1,0 +1,7 @@
+namespace Mango.Services.RewardAPI.Messaging;
+
+public interface IRabbitMqConsumer
+{
+	Task StartAsync(CancellationToken cancellationToken);
+	Task StopAsync(CancellationToken cancellationToken);
+}
