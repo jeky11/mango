@@ -1,21 +1,35 @@
 ﻿services:
-  mssql:
-    container_name: mssql
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    ports:
-      - "1433:1433"
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=aA!123456
-    volumes:
-      - mssql_write_data:/var/opt/mssql
-    networks:
-      - mssql-write-network
-    restart: unless-stopped
+    mssql:
+        container_name: mssql
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+            - "1433:1433"
+        environment:
+            - ACCEPT_EULA=Y
+            - SA_PASSWORD=aA!123456
+        volumes:
+            - mssql_write_data:/var/opt/mssql
+        networks:
+            - mssql-write-network
+        restart: unless-stopped
+
+    rabbitmq:
+        image: rabbitmq:4.1-management
+        container_name: rabbitmq
+        ports:
+            - "5672:5672"       # RabbitMQ broker (AMQP)
+            - "15672:15672"     # Management UI
+        environment:
+            RABBITMQ_DEFAULT_USER: user
+            RABBITMQ_DEFAULT_PASS: password
+        volumes:
+            - rabbitmq_data:/var/lib/rabbitmq
+        restart: unless-stopped
 
 volumes:
-  mssql_write_data:
+    mssql_write_data:
+    rabbitmq_data:
 
 networks:
-  mssql-write-network:
-    driver: bridge
+    mssql-write-network:
+        driver: bridge
