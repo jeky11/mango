@@ -1,6 +1,6 @@
 namespace Mango.Services.ShoppingCartAPI.RabbitMQSender;
 
-public interface IRabbitMqAuthSender
+public interface IRabbitMqSender
 {
 	Task PublishMessageAsync(object message, string queueName, CancellationToken cancellationToken = default);
 }

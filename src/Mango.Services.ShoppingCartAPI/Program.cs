@@ -30,7 +30,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICouponService, CouponService>();
 builder.Services.AddScoped<IMessageBus, MessageBus>(_ => new MessageBus(messageBusConnection));
-builder.Services.AddSingleton<IRabbitMqAuthSender, RabbitMqAuthSender>(_ => new RabbitMqAuthSender(rabbitMqConnection));
+builder.Services.AddSingleton<IRabbitMqSender, RabbitMqSender>(_ => new RabbitMqSender(rabbitMqConnection));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<BackendApiAuthenticationHttpClientHandler>();
 builder.Services.AddHttpClient("Product", client => client.BaseAddress = new Uri(serviceUrls.ProductApi))

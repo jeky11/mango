@@ -4,6 +4,7 @@ using Mango.Services.Infrastructure.Models.Dto;
 using Mango.Services.ShoppingCartAPI.Data;
 using Mango.Services.ShoppingCartAPI.Models;
 using Mango.Services.ShoppingCartAPI.Models.Dto;
+using Mango.Services.ShoppingCartAPI.RabbitMQSender;
 using Mango.Services.ShoppingCartAPI.Service.IService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,7 @@ public class CartApiController : ControllerBase
 	private readonly AppDbContext _db;
 	private readonly IProductService _productService;
 	private readonly ICouponService _couponService;
-	private readonly IMessageBus _messageBus;
+	private readonly IRabbitMqSender _messageBus;
 	private readonly TopicAndQueueNames _topicAndQueueNames;
 
 	public CartApiController(
@@ -27,7 +28,7 @@ public class CartApiController : ControllerBase
 		AppDbContext db,
 		IProductService productService,
 		ICouponService couponService,
-		IMessageBus messageBus,
+		IRabbitMqSender messageBus,
 		IOptions<TopicAndQueueNames> topicAndQueueNames)
 	{
 		_mapper = mapper;

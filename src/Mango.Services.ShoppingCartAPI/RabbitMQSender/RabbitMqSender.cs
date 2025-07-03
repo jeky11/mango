@@ -5,12 +5,12 @@ using RabbitMQ.Client;
 
 namespace Mango.Services.ShoppingCartAPI.RabbitMQSender;
 
-public class RabbitMqAuthSender : IRabbitMqAuthSender, IAsyncDisposable
+public class RabbitMqSender : IRabbitMqSender, IAsyncDisposable
 {
 	private readonly IConnection _connection;
 	private readonly ConcurrentDictionary<string, IChannel> _channels = new();
 
-	public RabbitMqAuthSender(string connectionString)
+	public RabbitMqSender(string connectionString)
 	{
 		var factory = new ConnectionFactory {Uri = new Uri(connectionString)};
 		_connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
