@@ -4,6 +4,7 @@ using Mango.Services.Infrastructure.Models.Dto;
 using Mango.Services.OrderAPI.Data;
 using Mango.Services.OrderAPI.Models;
 using Mango.Services.OrderAPI.Models.Dto;
+using Mango.Services.OrderAPI.RabbitMQSender;
 using Mango.Services.OrderAPI.Service.IService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,13 +22,13 @@ public class OrderApiController(
 	IMapper mapper,
 	AppDbContext db,
 	IProductService productService,
-	IMessageBus messageBus,
+	IRabbitMqSender messageBus,
 	IOptions<TopicAndQueueNames> topicAndQueueNames) : ControllerBase
 {
 	private readonly IMapper _mapper = mapper;
 	private readonly AppDbContext _db = db;
 	private readonly IProductService _productService = productService;
-	private readonly IMessageBus _messageBus = messageBus;
+	private readonly IRabbitMqSender _messageBus = messageBus;
 	private readonly TopicAndQueueNames _topicAndQueueNames = topicAndQueueNames.Value;
 	
 	[HttpGet("getOrders")]

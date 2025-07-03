@@ -19,10 +19,10 @@ public class RabbitMqSender : IRabbitMqSender, IAsyncDisposable
 	public async Task PublishMessageAsync(object message, string exhangeName, CancellationToken cancellationToken = default)
 	{
 		var channel = _channels.GetOrAdd(
-			exhangeName, qn =>
+			exhangeName, en =>
 			{
 				var ch = _connection.CreateChannelAsync(cancellationToken: cancellationToken).GetAwaiter().GetResult();
-				ch.ExchangeDeclareAsync(qn, ExchangeType.Fanout, false, false, cancellationToken: cancellationToken).GetAwaiter().GetResult();
+				ch.ExchangeDeclareAsync(en, ExchangeType.Fanout, false, false, cancellationToken: cancellationToken).GetAwaiter().GetResult();
 				return ch;
 			});
 

@@ -1,4 +1,5 @@
 using System.Text;
+using Mango.Services.EmailAPI.Message;
 using Mango.Services.EmailAPI.Models;
 using Mango.Services.EmailAPI.Models.Dto;
 using Mango.Services.EmailAPI.Services;
@@ -18,10 +19,11 @@ public class RabbitMqConsumer(
 	private readonly Uri _connectionString = new(connectionStrings.Value.RabbitMQConnection);
 	private readonly TopicAndQueueNames _topicAndQueueNames = topicAndQueueNames.Value;
 	private IConnection? _connection;
-	private readonly Dictionary<string, IChannel> _channels = new();
+	private readonly List<IChannel> _channels = new();
 
-	private async Task RegisterHandlerAsync(
+	private async Task RegisterQueueHandlerAsync(
 		IConnection connection,
+		string exchangeName,
 		string queueName,
 		Func<IChannel, BasicDeliverEventArgs, Task> handler,
 		CancellationToken cancellationToken)
@@ -29,12 +31,18 @@ public class RabbitMqConsumer(
 		var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
 		await channel.QueueDeclareAsync(queueName, false, false, false, cancellationToken: cancellationToken);
 
+		if (!string.IsNullOrEmpty(exchangeName))
+		{
+			await channel.ExchangeDeclareAsync(exchangeName, ExchangeType.Fanout, false, false, cancellationToken: cancellationToken);
+			await channel.QueueBindAsync(queueName, exchangeName, "", cancellationToken: cancellationToken);
+		}
+
 		var consumer = new AsyncEventingBasicConsumer(channel);
 		consumer.ReceivedAsync += async (_, eventArgs) => await handler(channel, eventArgs);
 
 		await channel.BasicConsumeAsync(queueName, false, consumer, cancellationToken);
 
-		_channels.Add(queueName, channel);
+		_channels.Add(channel);
 	}
 
 	public async Task StartAsync(CancellationToken cancellationToken)
@@ -42,17 +50,23 @@ public class RabbitMqConsumer(
 		var factory = new ConnectionFactory {Uri = _connectionString};
 		_connection = factory.CreateConnectionAsync(cancellationToken).GetAwaiter().GetResult();
 
-		await RegisterHandlerAsync(_connection, _topicAndQueueNames.RegisterUserQueue, OnUserRegisterRequestReceivedAsync, cancellationToken);
-		await RegisterHandlerAsync(_connection, _topicAndQueueNames.EmailShoppingCartQueue, OnEmailCartRequestReceived, cancellationToken);
+		await RegisterQueueHandlerAsync(
+			_connection, "", _topicAndQueueNames.RegisterUserQueue, OnUserRegisterRequestReceivedAsync, cancellationToken);
+		await RegisterQueueHandlerAsync(
+			_connection, "", _topicAndQueueNames.EmailShoppingCartQueue, OnEmailCartRequestReceived, cancellationToken);
+		await RegisterQueueHandlerAsync(
+			_connection, _topicAndQueueNames.OrderCreatedTopic, _topicAndQueueNames.OrderCreatedEmailSubscription,
+			OnOrderPlacedRequestReceived, cancellationToken);
 	}
 
 	public async Task StopAsync(CancellationToken cancellationToken)
 	{
 		foreach (var channel in _channels)
 		{
-			await channel.Value.DisposeAsync();
-			_channels.Remove(channel.Key);
+			await channel.DisposeAsync();
 		}
+
+		_channels.Clear();
 
 		if (_connection != null)
 		{
@@ -65,6 +79,10 @@ public class RabbitMqConsumer(
 
 	private async Task OnUserRegisterRequestReceivedAsync(IChannel channel, BasicDeliverEventArgs arg) =>
 		await HandleMessageAsync<string, IEmailService>(channel, arg, (service, email) => service.RegisterUserEmailAndLogAsync(email));
+
+	private async Task OnOrderPlacedRequestReceived(IChannel channel, BasicDeliverEventArgs arg) =>
+		await HandleMessageAsync<RewardsMessage, IEmailService>(
+			channel, arg, (service, rewardsMessage) => service.LogOrderPlacedAsync(rewardsMessage));
 
 	private async Task HandleMessageAsync<TMessage, TService>(
 		IChannel channel,
