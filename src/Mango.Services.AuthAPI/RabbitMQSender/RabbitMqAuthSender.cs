@@ -33,11 +33,13 @@ public class RabbitMqAuthSender : IRabbitMqAuthSender, IAsyncDisposable
 
 	public async ValueTask DisposeAsync()
 	{
-		await _connection.DisposeAsync();
 		foreach (var channel in _channels)
 		{
 			await channel.Value.DisposeAsync();
+			_channels.TryRemove(channel);
 		}
+
+		await _connection.DisposeAsync();
 
 		GC.SuppressFinalize(this);
 	}
