@@ -6,11 +6,11 @@ public class AzureServiceBusHostedService(IAzureServiceBusConsumer serviceBusCon
 
 	public async Task StartAsync(CancellationToken cancellationToken)
 	{
-		await _serviceBusConsumer.StartAsync();
+		await _serviceBusConsumer.StartAsync(cancellationToken);
 	}
 
 	public async Task StopAsync(CancellationToken cancellationToken)
 	{
-		await _serviceBusConsumer.StopAsync();
+		await _serviceBusConsumer.StopAsync(cancellationToken);
 	}
 }

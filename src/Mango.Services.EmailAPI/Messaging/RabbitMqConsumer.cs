@@ -15,12 +15,12 @@ public class RabbitMqConsumer : IRabbitMqConsumer
 		_scopeFactory = scopeFactory;
 	}
 
-	public Task StartAsync()
+	public async Task StartAsync(CancellationToken cancellationToken)
 	{
 		throw new NotImplementedException();
 	}
 
-	public Task StopAsync()
+	public Task StopAsync(CancellationToken cancellationToken)
 	{
 		throw new NotImplementedException();
 	}

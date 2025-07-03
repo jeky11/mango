@@ -31,30 +31,30 @@ public class AzureServiceBusConsumer : IAzureServiceBusConsumer
 			topicAndQueueNames.Value.OrderCreatedTopic, topicAndQueueNames.Value.OrderCreatedEmailSubscription);
 	}
 
-	public async Task StartAsync()
+	public async Task StartAsync(CancellationToken cancellationToken)
 	{
 		_emailCartProcessor.ProcessMessageAsync += OnEmailCartRequestReceived;
 		_emailCartProcessor.ProcessErrorAsync += ErrorHandler;
-		await _emailCartProcessor.StartProcessingAsync();
+		await _emailCartProcessor.StartProcessingAsync(cancellationToken);
 
 		_registerUserProcessor.ProcessMessageAsync += OnUserRegisterRequestReceived;
 		_registerUserProcessor.ProcessErrorAsync += ErrorHandler;
-		await _registerUserProcessor.StartProcessingAsync();
+		await _registerUserProcessor.StartProcessingAsync(cancellationToken);
 
 		_emailOrderPlacedProcessor.ProcessMessageAsync += OnOrderPlacedRequestReceived;
 		_emailOrderPlacedProcessor.ProcessErrorAsync += ErrorHandler;
-		await _emailOrderPlacedProcessor.StartProcessingAsync();
+		await _emailOrderPlacedProcessor.StartProcessingAsync(cancellationToken);
 	}
 
-	public async Task StopAsync()
+	public async Task StopAsync(CancellationToken cancellationToken)
 	{
-		await _emailCartProcessor.StopProcessingAsync();
+		await _emailCartProcessor.StopProcessingAsync(cancellationToken);
 		await _emailCartProcessor.DisposeAsync();
 
-		await _registerUserProcessor.StopProcessingAsync();
+		await _registerUserProcessor.StopProcessingAsync(cancellationToken);
 		await _registerUserProcessor.DisposeAsync();
 
-		await _emailOrderPlacedProcessor.StopProcessingAsync();
+		await _emailOrderPlacedProcessor.StopProcessingAsync(cancellationToken);
 		await _emailOrderPlacedProcessor.DisposeAsync();
 	}
 

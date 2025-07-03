@@ -6,11 +6,11 @@ public class RabbitMqHostedService(IRabbitMqConsumer rabbitMqConsumer) : IHosted
 
 	public async Task StartAsync(CancellationToken cancellationToken)
 	{
-		await _rabbitMqConsumer.StartAsync();
+		await _rabbitMqConsumer.StartAsync(cancellationToken);
 	}
 
 	public async Task StopAsync(CancellationToken cancellationToken)
 	{
-		await _rabbitMqConsumer.StopAsync();
+		await _rabbitMqConsumer.StopAsync(cancellationToken);
 	}
 }
