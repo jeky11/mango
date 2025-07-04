@@ -1,4 +1,5 @@
 using Mango.MessageBus;
+using Mango.MessageBus.Extensions;
 using Mango.MessageBus.MessageBusConsumer;
 using Mango.Services.EmailAPI.Data;
 using Mango.Services.EmailAPI.Messaging;
@@ -19,9 +20,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IMessageHandler, EmailShoppingCartHandler>();
-builder.Services.AddScoped<IMessageHandler, OrderCreatedEmailHandler>();
-builder.Services.AddScoped<IMessageHandler, RegisterUserEmailHandler>();
+builder.Services.AddScoped<EmailShoppingCartHandler>();
+builder.Services.AddScoped<OrderCreatedEmailHandler>();
+builder.Services.AddScoped<RegisterUserEmailHandler>();
 builder.Services.AddSingleton<IMessageBusConsumerFactory, MessageBusConsumerFactory>();
 builder.Services.AddSingleton<IMessageBusConsumer>(sp => sp.GetRequiredService<IMessageBusConsumerFactory>().CreateMessageBusConsumer());
 builder.Services.AddHostedService<MessageBusConsumerHostedService>();
@@ -46,6 +47,10 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.Services.RegisterMessageHandler<EmailShoppingCartHandler>();
+app.Services.RegisterMessageHandler<OrderCreatedEmailHandler>();
+app.Services.RegisterMessageHandler<RegisterUserEmailHandler>();
 
 app.Services.ApplyMigrations<AppDbContext>();
 

@@ -13,11 +13,17 @@ public interface IMessageBusConsumerFactory
 public class MessageBusConsumerFactory : IMessageBusConsumerFactory
 {
 	private readonly IServiceScopeFactory _serviceScopeFactory;
+	private readonly ILogger<AzureMessageBusConsumer> _azureMessageBusLogger;
+	private readonly ILogger<RabbitMQMessageBusConsumer> _rabbitMQMessageBusLogger;
 	private readonly string _azureServiceBusConnectionString;
 	private readonly string _rabbitMQConnectionString;
 	private readonly bool _useAzureMessageBus;
 
-	public MessageBusConsumerFactory(IOptions<MessageBusConnectionStrings> connectionStrings, IServiceScopeFactory serviceScopeFactory)
+	public MessageBusConsumerFactory(
+		IOptions<MessageBusConnectionStrings> connectionStrings,
+		IServiceScopeFactory serviceScopeFactory,
+		ILogger<AzureMessageBusConsumer> azureMessageBusLogger,
+		ILogger<RabbitMQMessageBusConsumer> rabbitMQMessageBusLogger)
 	{
 		connectionStrings.Value.Validate();
 
@@ -25,29 +31,12 @@ public class MessageBusConsumerFactory : IMessageBusConsumerFactory
 		_rabbitMQConnectionString = connectionStrings.Value.RabbitMQConnection;
 		_useAzureMessageBus = !string.IsNullOrWhiteSpace(_azureServiceBusConnectionString);
 		_serviceScopeFactory = serviceScopeFactory;
+		_azureMessageBusLogger = azureMessageBusLogger;
+		_rabbitMQMessageBusLogger = rabbitMQMessageBusLogger;
 	}
 
-	public IMessageBusConsumer CreateMessageBusConsumer()
-	{
-		using var serviceScope = _serviceScopeFactory.CreateScope();
-		var serviceProvider = serviceScope.ServiceProvider;
-
-		return _useAzureMessageBus
-			? CreateAzureMessageBusConsumer(serviceProvider)
-			: CreateRabbitMQMessageBusConsumer(serviceProvider);
-	}
-
-	private RabbitMQMessageBusConsumer CreateRabbitMQMessageBusConsumer(IServiceProvider serviceProvider)
-	{
-		var handlers = serviceProvider.GetServices<IMessageHandler>();
-		var logger = serviceProvider.GetRequiredService<ILogger<RabbitMQMessageBusConsumer>>();
-		return new RabbitMQMessageBusConsumer(_rabbitMQConnectionString, handlers, logger);
-	}
-
-	private AzureMessageBusConsumer CreateAzureMessageBusConsumer(IServiceProvider serviceProvider)
-	{
-		var handlers = serviceProvider.GetServices<IMessageHandler>();
-		var logger = serviceProvider.GetRequiredService<ILogger<AzureMessageBusConsumer>>();
-		return new AzureMessageBusConsumer(_azureServiceBusConnectionString, handlers, logger);
-	}
+	public IMessageBusConsumer CreateMessageBusConsumer() =>
+		_useAzureMessageBus
+			? new AzureMessageBusConsumer(_azureServiceBusConnectionString, _serviceScopeFactory, _azureMessageBusLogger)
+			: new RabbitMQMessageBusConsumer(_rabbitMQConnectionString, _serviceScopeFactory, _rabbitMQMessageBusLogger);
 }

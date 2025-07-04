@@ -1,4 +1,5 @@
 using Mango.MessageBus;
+using Mango.MessageBus.Extensions;
 using Mango.MessageBus.MessageBusConsumer;
 using Mango.Services.Infrastructure.Extensions;
 using Mango.Services.RewardAPI.Data;
@@ -19,7 +20,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<IRewardService, RewardService>();
-builder.Services.AddScoped<IMessageHandler, OrderCreatedRewardsHandler>();
+builder.Services.AddScoped<OrderCreatedRewardsHandler>();
 builder.Services.AddSingleton<IMessageBusConsumerFactory, MessageBusConsumerFactory>();
 builder.Services.AddSingleton<IMessageBusConsumer>(sp => sp.GetRequiredService<IMessageBusConsumerFactory>().CreateMessageBusConsumer());
 builder.Services.AddHostedService<MessageBusConsumerHostedService>();
@@ -44,6 +45,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.Services.RegisterMessageHandler<OrderCreatedRewardsHandler>();
 app.Services.ApplyMigrations<AppDbContext>();
 
 app.Run();

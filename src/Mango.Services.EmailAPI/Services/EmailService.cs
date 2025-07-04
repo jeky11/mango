@@ -6,9 +6,10 @@ using Mango.Services.EmailAPI.Models.Dto;
 
 namespace Mango.Services.EmailAPI.Services;
 
-public class EmailService(AppDbContext context) : IEmailService
+public class EmailService(AppDbContext context, ILogger<EmailService> logger) : IEmailService
 {
 	private readonly AppDbContext _context = context;
+	private readonly ILogger<EmailService> _logger = logger;
 
 	public async Task EmailCartAndLogAsync(CartDto cartDto)
 	{
@@ -62,8 +63,9 @@ public class EmailService(AppDbContext context) : IEmailService
 			await _context.SaveChangesAsync();
 			return true;
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
+			_logger.LogError(ex, "An error occured while logging email");
 			return false;
 		}
 	}

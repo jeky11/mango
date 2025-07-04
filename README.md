@@ -15,3 +15,10 @@ Learn Microservices architecture with .NET Core MVC(.NET 8), Entity Framework Co
 - Entity Framework Core with SQL Server Database
 
 https://www.udemy.com/course/net-core-microservices-the-complete-guide-net-6-mvc
+
+# How to use
+* Use run-container.sh to run MS SQL Server and RabbitMQ
+* Use stop-clean-container.sh to remove container with the MS SQL Server and RabbitMQ
+* Use "Run all" to start all API services and web project
+* Don't forget to setup Stripe SecretKey
+* Use AzureServiceBusConnection instead of RabbitMQConnection to use AzureServiceBus

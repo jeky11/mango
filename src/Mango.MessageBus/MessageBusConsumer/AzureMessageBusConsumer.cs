@@ -1,28 +1,37 @@
 using System.Text;
 using Azure.Messaging.ServiceBus;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Mango.MessageBus.MessageBusConsumer;
 
 public class AzureMessageBusConsumer(
 	string connectionString,
-	IEnumerable<IMessageHandler> handlers,
+	IServiceScopeFactory serviceScopeFactory,
 	ILogger<AzureMessageBusConsumer> logger) : IMessageBusConsumer
 {
 	private readonly ServiceBusClient _client = new(connectionString);
-	private readonly List<IMessageHandler> _handlers = handlers.ToList();
+	private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
 	private readonly ILogger<AzureMessageBusConsumer> _logger = logger;
 	private readonly List<ServiceBusProcessor> _processors = [];
+	private readonly List<Type> _handlerTypes = [];
+
+	public void RegisterHandler<THandler>() where THandler : IMessageHandler =>
+		_handlerTypes.Add(typeof(THandler));
 
 	public async Task StartAsync(CancellationToken cancellationToken)
 	{
-		foreach (var handler in _handlers)
+		using var scope = _serviceScopeFactory.CreateScope();
+
+		foreach (var handlerType in _handlerTypes)
 		{
+			var handler = (IMessageHandler)scope.ServiceProvider.GetRequiredService(handlerType);
+
 			var processor = !string.IsNullOrWhiteSpace(handler.TopicName) && !string.IsNullOrWhiteSpace(handler.SubscriptionName)
 				? _client.CreateProcessor(handler.TopicName, handler.SubscriptionName)
 				: _client.CreateProcessor(handler.QueueName);
 
-			processor.ProcessMessageAsync += async args => await HandleMessageAsync(args, handler.HandleAsync);
+			processor.ProcessMessageAsync += async args => await HandleMessageAsync(args, handlerType);
 			processor.ProcessErrorAsync += ErrorHandler;
 
 			_processors.Add(processor);
@@ -42,14 +51,17 @@ public class AzureMessageBusConsumer(
 		_processors.Clear();
 	}
 
-	private async Task HandleMessageAsync(ProcessMessageEventArgs arg, Func<string, Task> handler)
+	private async Task HandleMessageAsync(ProcessMessageEventArgs arg, Type handlerType)
 	{
 		var message = arg.Message;
 		var body = Encoding.UTF8.GetString(message.Body);
 
 		try
 		{
-			await handler(body);
+			using var scope = _serviceScopeFactory.CreateScope();
+			var handler = (IMessageHandler)scope.ServiceProvider.GetRequiredService(handlerType);
+
+			await handler.HandleAsync(body);
 			await arg.CompleteMessageAsync(arg.Message);
 		}
 		catch (Exception ex)
