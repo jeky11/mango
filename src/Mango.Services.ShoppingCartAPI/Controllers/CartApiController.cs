@@ -1,5 +1,5 @@
 using AutoMapper;
-using Mango.MessageBus;
+using Mango.MessageBus.MessageBusSender;
 using Mango.Services.Infrastructure.Models.Dto;
 using Mango.Services.ShoppingCartAPI.Data;
 using Mango.Services.ShoppingCartAPI.Models;
@@ -19,7 +19,7 @@ public class CartApiController : ControllerBase
 	private readonly AppDbContext _db;
 	private readonly IProductService _productService;
 	private readonly ICouponService _couponService;
-	private readonly IMessageBus _messageBus;
+	private readonly IMessageBusSender _messageBusSender;
 	private readonly TopicAndQueueNames _topicAndQueueNames;
 
 	public CartApiController(
@@ -27,14 +27,14 @@ public class CartApiController : ControllerBase
 		AppDbContext db,
 		IProductService productService,
 		ICouponService couponService,
-		IMessageBus messageBus,
+		IMessageBusSender messageBusSender,
 		IOptions<TopicAndQueueNames> topicAndQueueNames)
 	{
 		_mapper = mapper;
 		_db = db;
 		_productService = productService;
 		_couponService = couponService;
-		_messageBus = messageBus;
+		_messageBusSender = messageBusSender;
 		_topicAndQueueNames = topicAndQueueNames.Value;
 	}
 
@@ -218,7 +218,7 @@ public class CartApiController : ControllerBase
 	{
 		try
 		{
-			await _messageBus.PublishMessageAsync(cartDto, _topicAndQueueNames.EmailShoppingCartQueue);
+			await _messageBusSender.PublishMessageToQueueAsync(cartDto, _topicAndQueueNames.EmailShoppingCartQueue);
 
 			return new ResponseDto {Result = true};
 		}

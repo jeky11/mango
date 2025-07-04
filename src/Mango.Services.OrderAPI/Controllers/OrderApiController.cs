@@ -1,5 +1,5 @@
 using AutoMapper;
-using Mango.MessageBus;
+using Mango.MessageBus.MessageBusSender;
 using Mango.Services.Infrastructure.Models.Dto;
 using Mango.Services.OrderAPI.Data;
 using Mango.Services.OrderAPI.Models;
@@ -21,15 +21,15 @@ public class OrderApiController(
 	IMapper mapper,
 	AppDbContext db,
 	IProductService productService,
-	IMessageBus messageBus,
+	IMessageBusSender messageBusSender,
 	IOptions<TopicAndQueueNames> topicAndQueueNames) : ControllerBase
 {
 	private readonly IMapper _mapper = mapper;
 	private readonly AppDbContext _db = db;
 	private readonly IProductService _productService = productService;
-	private readonly IMessageBus _messageBus = messageBus;
+	private readonly IMessageBusSender _messageBusSender = messageBusSender;
 	private readonly TopicAndQueueNames _topicAndQueueNames = topicAndQueueNames.Value;
-	
+
 	[HttpGet("getOrders")]
 	public async Task<ResponseDto> GetOrders(string? userId = "")
 	{
@@ -140,7 +140,7 @@ public class OrderApiController(
 				UserId = orderHeader.UserId,
 			};
 
-			await _messageBus.PublishMessageAsync(rewardsDto, _topicAndQueueNames.OrderCreatedTopic);
+			await _messageBusSender.PublishMessageToTopicAsync(rewardsDto, _topicAndQueueNames.OrderCreatedTopic);
 
 			var result = _mapper.Map<OrderHeaderDto>(orderHeader);
 			return new ResponseDto {Result = result};
