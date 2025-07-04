@@ -12,7 +12,7 @@ public class MessageBusSenderFactory : IMessageBusSenderFactory
 	public MessageBusSenderFactory(IOptions<MessageBusConnectionStrings> connectionStrings)
 	{
 		connectionStrings.Value.Validate();
-		_azureServiceBusConnectionString = connectionStrings.Value.MessageBusConnection;
+		_azureServiceBusConnectionString = connectionStrings.Value.AzureServiceBusConnection;
 		_rabbitMQConnectionString = connectionStrings.Value.RabbitMQConnection;
 		_useAzureMessageBus = !string.IsNullOrWhiteSpace(_azureServiceBusConnectionString);
 	}

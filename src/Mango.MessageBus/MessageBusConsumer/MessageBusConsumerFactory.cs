@@ -20,7 +20,7 @@ public class MessageBusConsumerFactory : IMessageBusConsumerFactory
 		connectionStrings.Value.Validate();
 
 		_handlers = handlers;
-		_azureServiceBusConnectionString = connectionStrings.Value.MessageBusConnection;
+		_azureServiceBusConnectionString = connectionStrings.Value.AzureServiceBusConnection;
 		_rabbitMQConnectionString = connectionStrings.Value.RabbitMQConnection;
 		_useAzureMessageBus = !string.IsNullOrWhiteSpace(_azureServiceBusConnectionString);
 	}
