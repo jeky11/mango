@@ -22,7 +22,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IMessageBusHandler, EmailShoppingCartHandler>();
 builder.Services.AddScoped<IMessageBusHandler, OrderCreatedEmailHandler>();
 builder.Services.AddScoped<IMessageBusHandler, RegisterUserEmailHandler>();
-builder.Services.AddScoped<IMessageBusConsumerFactory, MessageBusConsumerFactory>();
+builder.Services.AddSingleton<IMessageBusConsumerFactory, MessageBusConsumerFactory>();
 builder.Services.AddSingleton<IMessageBusConsumer>(sp => sp.GetRequiredService<IMessageBusConsumerFactory>().CreateMessageBusConsumer());
 builder.Services.AddHostedService<MessageBusConsumerHostedService>();
 

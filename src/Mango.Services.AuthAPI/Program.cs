@@ -24,7 +24,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 	.AddDefaultTokenProviders();
 
 builder.Services.AddControllers();
-builder.Services.AddScoped<IMessageBusSenderFactory, MessageBusSenderFactory>();
+builder.Services.AddSingleton<IMessageBusSenderFactory, MessageBusSenderFactory>();
 builder.Services.AddSingleton<IMessageBusSender>(sp => sp.GetRequiredService<IMessageBusSenderFactory>().CreateMessageBusSender());
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
