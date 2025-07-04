@@ -3,10 +3,10 @@ using Azure.Messaging.ServiceBus;
 
 namespace Mango.MessageBus.MessageBusConsumer;
 
-public class AzureMessageBusConsumer(string connectionString, IEnumerable<IMessageBusHandler> handlers) : IMessageBusConsumer
+public class AzureMessageBusConsumer(string connectionString, IEnumerable<IMessageHandler> handlers) : IMessageBusConsumer
 {
 	private readonly ServiceBusClient _client = new(connectionString);
-	private readonly List<IMessageBusHandler> _handlers = handlers.ToList();
+	private readonly List<IMessageHandler> _handlers = handlers.ToList();
 	private readonly List<ServiceBusProcessor> _processors = [];
 
 	public async Task StartAsync(CancellationToken cancellationToken)

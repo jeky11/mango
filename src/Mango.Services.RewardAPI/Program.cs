@@ -19,7 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<IRewardService, RewardService>();
-builder.Services.AddScoped<IMessageBusHandler, OrderCreatedRewardsHandler>();
+builder.Services.AddScoped<IMessageHandler, OrderCreatedRewardsHandler>();
 builder.Services.AddSingleton<IMessageBusConsumerFactory, MessageBusConsumerFactory>();
 builder.Services.AddSingleton<IMessageBusConsumer>(sp => sp.GetRequiredService<IMessageBusConsumerFactory>().CreateMessageBusConsumer());
 builder.Services.AddHostedService<MessageBusConsumerHostedService>();

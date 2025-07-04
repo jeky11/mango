@@ -1,6 +1,6 @@
 namespace Mango.MessageBus.MessageBusConsumer;
 
-public interface IMessageBusHandler
+public interface IMessageHandler
 {
 	string QueueName { get; }
 	string TopicName { get; }

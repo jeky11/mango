@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Mango.Services.EmailAPI.Messaging;
 
-public class RegisterUserEmailHandler(IOptions<TopicAndQueueNames> topicAndQueueNames, IEmailService emailService) : IMessageBusHandler
+public class RegisterUserEmailHandler(IOptions<TopicAndQueueNames> topicAndQueueNames, IEmailService emailService) : IMessageHandler
 {
 	private readonly IEmailService _emailService = emailService;
 

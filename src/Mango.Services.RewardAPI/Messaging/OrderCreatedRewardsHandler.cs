@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Mango.Services.RewardAPI.Messaging;
 
-public class OrderCreatedRewardsHandler(IOptions<TopicAndQueueNames> topicAndQueueNames, IRewardService rewardService) : IMessageBusHandler
+public class OrderCreatedRewardsHandler(IOptions<TopicAndQueueNames> topicAndQueueNames, IRewardService rewardService) : IMessageHandler
 {
 	private readonly IRewardService _rewardService = rewardService;
 

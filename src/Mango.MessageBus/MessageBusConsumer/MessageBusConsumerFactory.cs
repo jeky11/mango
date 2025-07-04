@@ -28,7 +28,7 @@ public class MessageBusConsumerFactory : IMessageBusConsumerFactory
 
 	public IMessageBusConsumer CreateMessageBusConsumer()
 	{
-		var handlers = _serviceScopeFactory.CreateScope().ServiceProvider.GetServices<IMessageBusHandler>();
+		var handlers = _serviceScopeFactory.CreateScope().ServiceProvider.GetServices<IMessageHandler>();
 
 		return _useAzureMessageBus
 			? new AzureMessageBusConsumer(_azureServiceBusConnectionString, handlers)

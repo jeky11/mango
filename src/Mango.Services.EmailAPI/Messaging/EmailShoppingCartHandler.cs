@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Mango.Services.EmailAPI.Messaging;
 
-public class EmailShoppingCartHandler(IOptions<TopicAndQueueNames> topicAndQueueNames, IEmailService emailService) : IMessageBusHandler
+public class EmailShoppingCartHandler(IOptions<TopicAndQueueNames> topicAndQueueNames, IEmailService emailService) : IMessageHandler
 {
 	private readonly IEmailService _emailService = emailService;
 

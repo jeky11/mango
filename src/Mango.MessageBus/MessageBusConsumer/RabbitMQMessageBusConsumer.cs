@@ -4,10 +4,10 @@ using RabbitMQ.Client.Events;
 
 namespace Mango.MessageBus.MessageBusConsumer;
 
-public class RabbitMQMessageBusConsumer(string connectionString, IEnumerable<IMessageBusHandler> handlers) : IMessageBusConsumer
+public class RabbitMQMessageBusConsumer(string connectionString, IEnumerable<IMessageHandler> handlers) : IMessageBusConsumer
 {
 	private readonly Uri _connectionString = new(connectionString);
-	private readonly List<IMessageBusHandler> _handlers = handlers.ToList();
+	private readonly List<IMessageHandler> _handlers = handlers.ToList();
 	private IConnection? _connection;
 	private readonly List<IChannel> _channels = [];
 

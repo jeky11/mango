@@ -19,9 +19,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IMessageBusHandler, EmailShoppingCartHandler>();
-builder.Services.AddScoped<IMessageBusHandler, OrderCreatedEmailHandler>();
-builder.Services.AddScoped<IMessageBusHandler, RegisterUserEmailHandler>();
+builder.Services.AddScoped<IMessageHandler, EmailShoppingCartHandler>();
+builder.Services.AddScoped<IMessageHandler, OrderCreatedEmailHandler>();
+builder.Services.AddScoped<IMessageHandler, RegisterUserEmailHandler>();
 builder.Services.AddSingleton<IMessageBusConsumerFactory, MessageBusConsumerFactory>();
 builder.Services.AddSingleton<IMessageBusConsumer>(sp => sp.GetRequiredService<IMessageBusConsumerFactory>().CreateMessageBusConsumer());
 builder.Services.AddHostedService<MessageBusConsumerHostedService>();
