@@ -1,5 +1,6 @@
 using Mango.MessageBus.Extensions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Mango.MessageBus.MessageBusConsumer;
@@ -28,10 +29,25 @@ public class MessageBusConsumerFactory : IMessageBusConsumerFactory
 
 	public IMessageBusConsumer CreateMessageBusConsumer()
 	{
-		var handlers = _serviceScopeFactory.CreateScope().ServiceProvider.GetServices<IMessageHandler>();
+		using var serviceScope = _serviceScopeFactory.CreateScope();
+		var serviceProvider = serviceScope.ServiceProvider;
 
 		return _useAzureMessageBus
-			? new AzureMessageBusConsumer(_azureServiceBusConnectionString, handlers)
-			: new RabbitMQMessageBusConsumer(_rabbitMQConnectionString, handlers);
+			? CreateAzureMessageBusConsumer(serviceProvider)
+			: CreateRabbitMQMessageBusConsumer(serviceProvider);
+	}
+
+	private RabbitMQMessageBusConsumer CreateRabbitMQMessageBusConsumer(IServiceProvider serviceProvider)
+	{
+		var handlers = serviceProvider.GetServices<IMessageHandler>();
+		var logger = serviceProvider.GetRequiredService<ILogger<RabbitMQMessageBusConsumer>>();
+		return new RabbitMQMessageBusConsumer(_rabbitMQConnectionString, handlers, logger);
+	}
+
+	private AzureMessageBusConsumer CreateAzureMessageBusConsumer(IServiceProvider serviceProvider)
+	{
+		var handlers = serviceProvider.GetServices<IMessageHandler>();
+		var logger = serviceProvider.GetRequiredService<ILogger<AzureMessageBusConsumer>>();
+		return new AzureMessageBusConsumer(_azureServiceBusConnectionString, handlers, logger);
 	}
 }

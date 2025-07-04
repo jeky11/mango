@@ -1,13 +1,18 @@
 using System.Text;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
 namespace Mango.MessageBus.MessageBusConsumer;
 
-public class RabbitMQMessageBusConsumer(string connectionString, IEnumerable<IMessageHandler> handlers) : IMessageBusConsumer
+public class RabbitMQMessageBusConsumer(
+	string connectionString,
+	IEnumerable<IMessageHandler> handlers,
+	ILogger<RabbitMQMessageBusConsumer> logger) : IMessageBusConsumer
 {
 	private readonly Uri _connectionString = new(connectionString);
 	private readonly List<IMessageHandler> _handlers = handlers.ToList();
+	private readonly ILogger<RabbitMQMessageBusConsumer> _logger = logger;
 	private IConnection? _connection;
 	private readonly List<IChannel> _channels = [];
 
@@ -41,7 +46,7 @@ public class RabbitMQMessageBusConsumer(string connectionString, IEnumerable<IMe
 		}
 	}
 
-	private static async Task<IChannel> RegisterHandlerAsync(
+	private async Task<IChannel> RegisterHandlerAsync(
 		IConnection connection,
 		string queueName,
 		Func<string, Task> handler,
@@ -58,7 +63,7 @@ public class RabbitMQMessageBusConsumer(string connectionString, IEnumerable<IMe
 		return channel;
 	}
 
-	private static async Task<IChannel> RegisterHandlerAsync(
+	private async Task<IChannel> RegisterHandlerAsync(
 		IConnection connection,
 		string topicName,
 		string subscriptionName,
@@ -82,7 +87,7 @@ public class RabbitMQMessageBusConsumer(string connectionString, IEnumerable<IMe
 		return channel;
 	}
 
-	private static async Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs eventArgs, Func<string, Task> handler)
+	private async Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs eventArgs, Func<string, Task> handler)
 	{
 		var body = Encoding.UTF8.GetString(eventArgs.Body.Span);
 		try
@@ -90,10 +95,9 @@ public class RabbitMQMessageBusConsumer(string connectionString, IEnumerable<IMe
 			await handler(body);
 			await channel.BasicAckAsync(eventArgs.DeliveryTag, false);
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			Console.WriteLine(e);
-			throw;
+			_logger.LogError(ex, "Error while processing message");
 		}
 	}
 }

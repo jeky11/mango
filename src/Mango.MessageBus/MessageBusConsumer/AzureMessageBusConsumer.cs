@@ -1,12 +1,17 @@
 using System.Text;
 using Azure.Messaging.ServiceBus;
+using Microsoft.Extensions.Logging;
 
 namespace Mango.MessageBus.MessageBusConsumer;
 
-public class AzureMessageBusConsumer(string connectionString, IEnumerable<IMessageHandler> handlers) : IMessageBusConsumer
+public class AzureMessageBusConsumer(
+	string connectionString,
+	IEnumerable<IMessageHandler> handlers,
+	ILogger<AzureMessageBusConsumer> logger) : IMessageBusConsumer
 {
 	private readonly ServiceBusClient _client = new(connectionString);
 	private readonly List<IMessageHandler> _handlers = handlers.ToList();
+	private readonly ILogger<AzureMessageBusConsumer> _logger = logger;
 	private readonly List<ServiceBusProcessor> _processors = [];
 
 	public async Task StartAsync(CancellationToken cancellationToken)
@@ -37,7 +42,7 @@ public class AzureMessageBusConsumer(string connectionString, IEnumerable<IMessa
 		_processors.Clear();
 	}
 
-	private static async Task HandleMessageAsync(ProcessMessageEventArgs arg, Func<string, Task> handler)
+	private async Task HandleMessageAsync(ProcessMessageEventArgs arg, Func<string, Task> handler)
 	{
 		var message = arg.Message;
 		var body = Encoding.UTF8.GetString(message.Body);
@@ -47,16 +52,26 @@ public class AzureMessageBusConsumer(string connectionString, IEnumerable<IMessa
 			await handler(body);
 			await arg.CompleteMessageAsync(arg.Message);
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			Console.WriteLine(e);
-			throw;
+			_logger.LogError(ex, "Error while processing message with MessageId: {MessageId}", message.MessageId);
+
+			if (message.DeliveryCount >= 3)
+			{
+				_logger.LogWarning(
+					"Message with ID {MessageId} moved to dead-letter after {Count} attempts", message.MessageId, message.DeliveryCount);
+				await arg.DeadLetterMessageAsync(message, "MaxRetryExceeded", "Exceeded retry count");
+			}
+			else
+			{
+				await arg.AbandonMessageAsync(message);
+			}
 		}
 	}
 
-	private static Task ErrorHandler(ProcessErrorEventArgs arg)
+	private Task ErrorHandler(ProcessErrorEventArgs arg)
 	{
-		Console.WriteLine(arg.Exception.ToString());
+		_logger.LogError(arg.Exception, "Unexpected error while processing message");
 		return Task.CompletedTask;
 	}
 }
