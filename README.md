@@ -22,3 +22,4 @@ https://www.udemy.com/course/net-core-microservices-the-complete-guide-net-6-mvc
 * Use "Run all" to start all API services and web project
 * Don't forget to setup Stripe SecretKey
 * Use AzureServiceBusConnection instead of RabbitMQConnection to use AzureServiceBus
+* To disable Gateway update appsettings.json and don't run Mango.GatewaySolution project
