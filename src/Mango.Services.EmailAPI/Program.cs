@@ -1,3 +1,5 @@
+using Mango.MessageBus;
+using Mango.MessageBus.MessageBusConsumer;
 using Mango.Services.EmailAPI.Data;
 using Mango.Services.EmailAPI.Messaging;
 using Mango.Services.EmailAPI.Models;
@@ -8,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.Configure<ConnectionStrings>(builder.Configuration.GetRequiredSection(nameof(ConnectionStrings)));
+builder.Services.Configure<MessageBusConnectionStrings>(builder.Configuration.GetRequiredSection("ConnectionStrings"));
 builder.Services.Configure<TopicAndQueueNames>(builder.Configuration.GetRequiredSection(nameof(TopicAndQueueNames)));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -17,10 +19,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddSingleton<IAzureServiceBusConsumer, AzureServiceBusConsumer>();
-builder.Services.AddHostedService<AzureServiceBusHostedService>();
-builder.Services.AddSingleton<IRabbitMqConsumer, RabbitMqConsumer>();
-builder.Services.AddHostedService<RabbitMqHostedService>();
+builder.Services.AddScoped<IMessageBusHandler, EmailShoppingCartHandler>();
+builder.Services.AddScoped<IMessageBusHandler, OrderCreatedEmailHandler>();
+builder.Services.AddScoped<IMessageBusHandler, RegisterUserEmailHandler>();
+builder.Services.AddScoped<IMessageBusConsumerFactory, MessageBusConsumerFactory>();
+builder.Services.AddSingleton<IMessageBusConsumer>(sp => sp.GetRequiredService<IMessageBusConsumerFactory>().CreateMessageBusConsumer());
+builder.Services.AddHostedService<MessageBusConsumerHostedService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

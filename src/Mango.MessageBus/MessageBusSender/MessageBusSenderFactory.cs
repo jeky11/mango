@@ -1,3 +1,4 @@
+using Mango.MessageBus.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace Mango.MessageBus.MessageBusSender;
@@ -10,19 +11,9 @@ public class MessageBusSenderFactory : IMessageBusSenderFactory
 
 	public MessageBusSenderFactory(IOptions<MessageBusConnectionStrings> connectionStrings)
 	{
+		connectionStrings.Value.Validate();
 		_azureServiceBusConnectionString = connectionStrings.Value.MessageBusConnection;
 		_rabbitMQConnectionString = connectionStrings.Value.RabbitMQConnection;
-
-		if (string.IsNullOrWhiteSpace(_azureServiceBusConnectionString) && string.IsNullOrWhiteSpace(_rabbitMQConnectionString))
-		{
-			throw new ArgumentException("You have to provide at least one connection string");
-		}
-
-		if (!string.IsNullOrWhiteSpace(_azureServiceBusConnectionString) && !string.IsNullOrWhiteSpace(_rabbitMQConnectionString))
-		{
-			throw new ArgumentException("You have to provide only one connection string");
-		}
-
 		_useAzureMessageBus = !string.IsNullOrWhiteSpace(_azureServiceBusConnectionString);
 	}
 
